@@ -1,9 +1,7 @@
 export type Vec3 = [number, number, number]
 
-export interface CubeEntity {
+export interface SphereEntity {
   position: Vec3
-  rotation: Vec3
   scale: Vec3
   velocity: Vec3
-  angularVelocity: Vec3
 }
