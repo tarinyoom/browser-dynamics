@@ -29,28 +29,20 @@ let dragForceY: number = 0;
 let mouseX: number = 0;
 let mouseY: number = 0;
 
-// Particle class
-class Particle {
-    x: number;
-    y: number;
-    vx: number = 0;
-    vy: number = 0;
-    fx: number = 0;
-    fy: number = 0;
-    density: number = 0;
-    pressure: number = 0;
-
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-}
+// Particle data arrays
+let posX: Float32Array;
+let posY: Float32Array;
+let velX: Float32Array;
+let velY: Float32Array;
+let forceX: Float32Array;
+let forceY: Float32Array;
+let density: Float32Array;
+let pressure: Float32Array;
 
 // Three.js objects
 let scene: THREE.Scene;
 let camera: THREE.OrthographicCamera;
 let renderer: THREE.WebGLRenderer;
-let particles: Particle[] = [];
 let particleMeshes: THREE.Mesh[] = [];
 
 // Initialize the simulation
@@ -83,6 +75,9 @@ function init(): void {
     // Initialize mouse/touch controls
     setupInteractionControls();
     
+    // Initialize particle data arrays
+    initParticleArrays();
+    
     // Create initial particles
     initParticles();
     
@@ -94,12 +89,36 @@ function init(): void {
     onWindowResize();
 }
 
+// Initialize particle data arrays
+function initParticleArrays(): void {
+    posX = new Float32Array(particleCount);
+    posY = new Float32Array(particleCount);
+    velX = new Float32Array(particleCount);
+    velY = new Float32Array(particleCount);
+    forceX = new Float32Array(particleCount);
+    forceY = new Float32Array(particleCount);
+    density = new Float32Array(particleCount);
+    pressure = new Float32Array(particleCount);
+}
+
 // Function to initialize particles
 function initParticles(): void {
     // Clear existing particles
-    particles = [];
     particleMeshes.forEach(mesh => scene.remove(mesh));
     particleMeshes = [];
+    
+    // Resize arrays if particle count has changed
+    if (posX.length !== particleCount) {
+        initParticleArrays();
+    } else {
+        // Reset arrays to zero
+        velX.fill(0);
+        velY.fill(0);
+        forceX.fill(0);
+        forceY.fill(0);
+        density.fill(0);
+        pressure.fill(0);
+    }
     
     // Create new particles
     const initialRegionWidth: number = WIDTH * 0.4;
@@ -113,12 +132,9 @@ function initParticles(): void {
         const row: number = Math.floor(i / particlesPerRow);
         const col: number = i % particlesPerRow;
         
-        const particle: Particle = new Particle(
-            startX + col * spacing + (Math.random() * 5), 
-            startY + row * spacing + (Math.random() * 5)
-        );
-        
-        particles.push(particle);
+        // Set initial position
+        posX[i] = startX + col * spacing + (Math.random() * 5);
+        posY[i] = startY + row * spacing + (Math.random() * 5);
         
         // Create visual representation
         const geometry: THREE.CircleGeometry = new THREE.CircleGeometry(4, 16);
@@ -128,7 +144,7 @@ function initParticles(): void {
             opacity: 0.8
         });
         const mesh: THREE.Mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(particle.x, particle.y, 0);
+        mesh.position.set(posX[i], posY[i], 0);
         
         particleMeshes.push(mesh);
         scene.add(mesh);
@@ -137,37 +153,40 @@ function initParticles(): void {
 
 // SPH functions
 function computeDensityPressure(): void {
-    for (const particle of particles) {
-        particle.density = 0;
-        
-        // Compute density and pressure
-        for (const neighbor of particles) {
-            const dx: number = neighbor.x - particle.x;
-            const dy: number = neighbor.y - particle.y;
+    // Reset densities to zero
+    density.fill(0);
+    
+    // Compute density for each particle
+    for (let i = 0; i < particleCount; i++) {
+        for (let j = 0; j < particleCount; j++) {
+            const dx: number = posX[j] - posX[i];
+            const dy: number = posY[j] - posY[i];
             const r2: number = dx * dx + dy * dy;
             
             if (r2 < H2) {
                 // Compute density with Poly6 kernel
-                particle.density += MASS * POLY6 * Math.pow(H2 - r2, 3);
+                density[i] += MASS * POLY6 * Math.pow(H2 - r2, 3);
             }
         }
         
         // Compute pressure using equation of state
-        particle.pressure = GAS_CONSTANT * (particle.density - REST_DENSITY);
+        pressure[i] = GAS_CONSTANT * (density[i] - REST_DENSITY);
     }
 }
 
 function computeForces(): void {
-    for (const particle of particles) {
-        let fx: number = 0;
-        let fy: number = 0;
-        
+    // Reset forces to zero
+    forceX.fill(0);
+    forceY.fill(0);
+    
+    // Compute forces for each particle
+    for (let i = 0; i < particleCount; i++) {
         // Compute pressure and viscosity forces
-        for (const neighbor of particles) {
-            if (particle === neighbor) continue;
+        for (let j = 0; j < particleCount; j++) {
+            if (i === j) continue;
             
-            const dx: number = neighbor.x - particle.x;
-            const dy: number = neighbor.y - particle.y;
+            const dx: number = posX[j] - posX[i];
+            const dy: number = posY[j] - posY[i];
             const r2: number = dx * dx + dy * dy;
             
             if (r2 < H2) {
@@ -179,82 +198,76 @@ function computeForces(): void {
                 const ny: number = dy * factor;
                 
                 // Pressure force
-                const pressureForce: number = -MASS * (particle.pressure + neighbor.pressure) / 
-                    (2 * neighbor.density) * SPIKY_GRAD * Math.pow(H - r, 2);
-                fx += pressureForce * nx;
-                fy += pressureForce * ny;
+                const pressureForce: number = -MASS * (pressure[i] + pressure[j]) / 
+                    (2 * density[j]) * SPIKY_GRAD * Math.pow(H - r, 2);
+                forceX[i] += pressureForce * nx;
+                forceY[i] += pressureForce * ny;
                 
                 // Viscosity force
-                const vx: number = neighbor.vx - particle.vx;
-                const vy: number = neighbor.vy - particle.vy;
-                const viscForce: number = VISCOSITY * MASS * VISC_LAP * (H - r) / neighbor.density;
-                fx += viscForce * vx;
-                fy += viscForce * vy;
+                const vx: number = velX[j] - velX[i];
+                const vy: number = velY[j] - velY[i];
+                const viscForce: number = VISCOSITY * MASS * VISC_LAP * (H - r) / density[j];
+                forceX[i] += viscForce * vx;
+                forceY[i] += viscForce * vy;
             }
         }
         
         // Gravity force
-        fy += gravity;
+        forceY[i] += gravity;
         
         // Mouse interaction
         if (isDragging) {
-            const dx: number = mouseX - particle.x;
-            const dy: number = mouseY - particle.y;
+            const dx: number = mouseX - posX[i];
+            const dy: number = mouseY - posY[i];
             const r2: number = dx * dx + dy * dy;
             const dragRadius: number = 50 * 50;
             
             if (r2 < dragRadius) {
                 const factor: number = 1.0 - Math.sqrt(r2) / 50;
-                fx += dragForceX * factor * 500;
-                fy += dragForceY * factor * 500;
+                forceX[i] += dragForceX * factor * 500;
+                forceY[i] += dragForceY * factor * 500;
             }
         }
-        
-        // Store forces
-        particle.fx = fx;
-        particle.fy = fy;
     }
 }
 
 function integrate(): void {
     // Update positions, velocities, and handle boundaries
-    for (let i = 0; i < particles.length; i++) {
-        const particle: Particle = particles[i];
-        
+    for (let i = 0; i < particleCount; i++) {
         // Forward Euler integration
-        particle.vx += DT * particle.fx / particle.density;
-        particle.vy += DT * particle.fy / particle.density;
+        velX[i] += DT * forceX[i] / density[i];
+        velY[i] += DT * forceY[i] / density[i];
         
-        particle.x += DT * particle.vx;
-        particle.y += DT * particle.vy;
+        posX[i] += DT * velX[i];
+        posY[i] += DT * velY[i];
         
         // Boundary conditions
-        if (particle.x < -WIDTH/2) {
-            particle.vx *= BOUND_DAMPING;
-            particle.x = -WIDTH/2;
+        if (posX[i] < -WIDTH/2) {
+            velX[i] *= BOUND_DAMPING;
+            posX[i] = -WIDTH/2;
         }
         
-        if (particle.x > WIDTH/2) {
-            particle.vx *= BOUND_DAMPING;
-            particle.x = WIDTH/2;
+        if (posX[i] > WIDTH/2) {
+            velX[i] *= BOUND_DAMPING;
+            posX[i] = WIDTH/2;
         }
         
-        if (particle.y < -HEIGHT/2) {
-            particle.vy *= BOUND_DAMPING;
-            particle.y = -HEIGHT/2;
+        if (posY[i] < -HEIGHT/2) {
+            velY[i] *= BOUND_DAMPING;
+            posY[i] = -HEIGHT/2;
         }
         
-        if (particle.y > HEIGHT/2) {
-            particle.vy *= BOUND_DAMPING;
-            particle.y = HEIGHT/2;
+        if (posY[i] > HEIGHT/2) {
+            velY[i] *= BOUND_DAMPING;
+            posY[i] = HEIGHT/2;
         }
         
         // Update mesh position
         const mesh: THREE.Mesh = particleMeshes[i];
-        mesh.position.set(particle.x, particle.y, 0);
+        mesh.position.set(posX[i], posY[i], 0);
         
         // Update color based on pressure
-        const pressureColor: number = Math.min(1.0, particle.pressure / (GAS_CONSTANT * REST_DENSITY));
+        const pressureColor: number = Math.min(1.0, pressure[i] / (GAS_CONSTANT * REST_DENSITY));
         const material = mesh.material as THREE.MeshBasicMaterial;
         material.color.setRGB(
             0.2 + pressureColor * 0.8,
