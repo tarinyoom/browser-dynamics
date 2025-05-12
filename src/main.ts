@@ -1,140 +1,179 @@
 import * as THREE from 'three';
 
-// SPH Parameters
-const REST_DENSITY: number = 1000; // rest density
-const GAS_CONSTANT: number = 2000; // gas constant
-const H: number = 16; // smoothing radius
-const H2: number = H * H; // squared smoothing radius
-const MASS: number = 65; // particle mass
-const VISCOSITY: number = 250; // viscosity constant
-const DT: number = 0.0008; // time step
-const BOUND_DAMPING: number = -0.5; // boundary damping
+// Types
+type Vector2D = {
+    x: number;
+    y: number;
+};
 
-// Container dimensions
-const WIDTH: number = 600;
-const HEIGHT: number = 400;
+type Particle = {
+    position: Vector2D;
+    velocity: Vector2D;
+    force: Vector2D;
+    density: number;
+    pressure: number;
+    mesh: THREE.Mesh;
+};
 
-// Kernel constants
-const POLY6: number = (315.0 / (64.0 * Math.PI * Math.pow(H, 9)));
-const SPIKY_GRAD: number = -(45.0 / (Math.PI * Math.pow(H, 6)));
-const VISC_LAP: number = (45.0 / (Math.PI * Math.pow(H, 6)));
+type InteractionState = {
+    isDragging: boolean;
+    position: Vector2D;
+    dragForce: Vector2D;
+};
 
-// Simulation state
-let gravity: number = 12000;
-let particleCount: number = 150;
-let isRunning: boolean = true;
-let isDragging: boolean = false;
-let dragForceX: number = 0;
-let dragForceY: number = 0;
-let mouseX: number = 0;
-let mouseY: number = 0;
+type SimulationState = {
+    particles: Particle[];
+    isRunning: boolean;
+    gravity: number;
+    interaction: InteractionState;
+    scene: THREE.Scene;
+    camera: THREE.OrthographicCamera;
+    renderer: THREE.WebGLRenderer;
+};
 
-// Particle data arrays
-let posX: Float32Array;
-let posY: Float32Array;
-let velX: Float32Array;
-let velY: Float32Array;
-let forceX: Float32Array;
-let forceY: Float32Array;
-let density: Float32Array;
-let pressure: Float32Array;
+// Constants
+const Constants = {
+    // SPH Parameters
+    REST_DENSITY: 1000, // rest density
+    GAS_CONSTANT: 2000, // gas constant
+    H: 16, // smoothing radius
+    H2: 16 * 16, // squared smoothing radius
+    MASS: 65, // particle mass
+    VISCOSITY: 250, // viscosity constant
+    DT: 0.0008, // time step
+    BOUND_DAMPING: -0.5, // boundary damping
 
-// Three.js objects
-let scene: THREE.Scene;
-let camera: THREE.OrthographicCamera;
-let renderer: THREE.WebGLRenderer;
-let particleMeshes: THREE.Mesh[] = [];
+    // Container dimensions
+    WIDTH: 600,
+    HEIGHT: 400,
 
-// Initialize the simulation
-function init(): void {
+    // Kernel constants
+    POLY6: 315.0 / (64.0 * Math.PI * Math.pow(16, 9)),
+    SPIKY_GRAD: -45.0 / (Math.PI * Math.pow(16, 6)),
+    VISC_LAP: 45.0 / (Math.PI * Math.pow(16, 6))
+};
+
+// Particle Functions
+function createParticle(position: Vector2D, mesh: THREE.Mesh): Particle {
+    return {
+        position: { ...position },
+        velocity: { x: 0, y: 0 },
+        force: { x: 0, y: 0 },
+        density: 0,
+        pressure: 0,
+        mesh: mesh
+    };
+}
+
+function updateParticleMeshPosition(particle: Particle): void {
+    particle.mesh.position.set(particle.position.x, particle.position.y, 0);
+}
+
+function updateParticleColor(particle: Particle, pressureNorm: number): void {
+    const material = particle.mesh.material as THREE.MeshBasicMaterial;
+    material.color.setRGB(
+        0.2 + pressureNorm * 0.8,
+        0.4 + (1.0 - pressureNorm) * 0.5,
+        0.8 + (1.0 - pressureNorm) * 0.2
+    );
+}
+
+// Interaction Functions
+function createInteractionState(): InteractionState {
+    return {
+        isDragging: false,
+        position: { x: 0, y: 0 },
+        dragForce: { x: 0, y: 0 }
+    };
+}
+
+function startDrag(interaction: InteractionState, position: Vector2D): void {
+    interaction.isDragging = true;
+    interaction.position = { ...position };
+}
+
+function updateDrag(interaction: InteractionState, newPosition: Vector2D): void {
+    interaction.dragForce = {
+        x: newPosition.x - interaction.position.x,
+        y: newPosition.y - interaction.position.y
+    };
+    interaction.position = { ...newPosition };
+}
+
+function endDrag(interaction: InteractionState): void {
+    interaction.isDragging = false;
+    interaction.dragForce = { x: 0, y: 0 };
+}
+
+// Main Simulation Functions
+function createSimulation(
+    containerId: string, 
+    initialParticleCount: number = 150, 
+    initialGravity: number = 12000
+): SimulationState {
     // Set up Three.js scene
-    scene = new THREE.Scene();
+    const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x111133);
     
-    camera = new THREE.OrthographicCamera(
-        -WIDTH / 2, WIDTH / 2, 
-        HEIGHT / 2, -HEIGHT / 2, 
+    const camera = new THREE.OrthographicCamera(
+        -Constants.WIDTH / 2, Constants.WIDTH / 2, 
+        Constants.HEIGHT / 2, -Constants.HEIGHT / 2, 
         0.1, 1000
     );
     camera.position.z = 100;
     
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(WIDTH, HEIGHT);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(Constants.WIDTH, Constants.HEIGHT);
     
-    const simulationElement = document.getElementById('simulation');
+    const simulationElement = document.getElementById(containerId);
     if (simulationElement) {
         simulationElement.appendChild(renderer.domElement);
     } else {
-        console.error("Could not find simulation element");
-        return;
+        console.error(`Could not find element with id: ${containerId}`);
+        throw new Error(`Could not find element with id: ${containerId}`);
     }
     
-    // Initialize UI controls
-    setupUIControls();
+    // Create the simulation state
+    const simulation: SimulationState = {
+        particles: [],
+        isRunning: true,
+        gravity: initialGravity,
+        interaction: createInteractionState(),
+        scene,
+        camera,
+        renderer
+    };
     
-    // Initialize mouse/touch controls
-    setupInteractionControls();
+    // Initialize particles
+    initParticles(simulation, initialParticleCount);
     
-    // Initialize particle data arrays
-    initParticleArrays();
-    
-    // Create initial particles
-    initParticles();
-    
-    // Start animation loop
-    animate();
-    
-    // Handle window resize
-    window.addEventListener('resize', onWindowResize);
-    onWindowResize();
+    return simulation;
 }
 
-// Initialize particle data arrays
-function initParticleArrays(): void {
-    posX = new Float32Array(particleCount);
-    posY = new Float32Array(particleCount);
-    velX = new Float32Array(particleCount);
-    velY = new Float32Array(particleCount);
-    forceX = new Float32Array(particleCount);
-    forceY = new Float32Array(particleCount);
-    density = new Float32Array(particleCount);
-    pressure = new Float32Array(particleCount);
-}
-
-// Function to initialize particles
-function initParticles(): void {
+function initParticles(simulation: SimulationState, count: number): void {
+    const { scene } = simulation;
+    
     // Clear existing particles
-    particleMeshes.forEach(mesh => scene.remove(mesh));
-    particleMeshes = [];
-    
-    // Resize arrays if particle count has changed
-    if (posX.length !== particleCount) {
-        initParticleArrays();
-    } else {
-        // Reset arrays to zero
-        velX.fill(0);
-        velY.fill(0);
-        forceX.fill(0);
-        forceY.fill(0);
-        density.fill(0);
-        pressure.fill(0);
-    }
+    simulation.particles.forEach(particle => scene.remove(particle.mesh));
+    simulation.particles = [];
     
     // Create new particles
-    const initialRegionWidth: number = WIDTH * 0.4;
-    const startX: number = -WIDTH/2 + 50;
-    const startY: number = -HEIGHT/2 + 50;
+    const initialRegionWidth: number = Constants.WIDTH * 0.4;
+    const startX: number = -Constants.WIDTH/2 + 50;
+    const startY: number = -Constants.HEIGHT/2 + 50;
     
-    const particlesPerRow: number = Math.ceil(Math.sqrt(particleCount));
+    const particlesPerRow: number = Math.ceil(Math.sqrt(count));
     const spacing: number = initialRegionWidth / particlesPerRow;
     
-    for (let i = 0; i < particleCount; i++) {
+    for (let i = 0; i < count; i++) {
         const row: number = Math.floor(i / particlesPerRow);
         const col: number = i % particlesPerRow;
         
         // Set initial position
-        posX[i] = startX + col * spacing + (Math.random() * 5);
-        posY[i] = startY + row * spacing + (Math.random() * 5);
+        const position = {
+            x: startX + col * spacing + (Math.random() * 5),
+            y: startY + row * spacing + (Math.random() * 5)
+        };
         
         // Create visual representation
         const geometry: THREE.CircleGeometry = new THREE.CircleGeometry(4, 16);
@@ -144,52 +183,56 @@ function initParticles(): void {
             opacity: 0.8
         });
         const mesh: THREE.Mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(posX[i], posY[i], 0);
+        mesh.position.set(position.x, position.y, 0);
         
-        particleMeshes.push(mesh);
+        // Create and add particle
+        const particle = createParticle(position, mesh);
+        simulation.particles.push(particle);
         scene.add(mesh);
     }
 }
 
-// SPH functions
-function computeDensityPressure(): void {
-    // Reset densities to zero
-    density.fill(0);
+function computeDensityPressure(particles: Particle[]): void {
+    // Reset densities
+    particles.forEach(particle => {
+        particle.density = 0;
+    });
     
     // Compute density for each particle
-    for (let i = 0; i < particleCount; i++) {
-        for (let j = 0; j < particleCount; j++) {
-            const dx: number = posX[j] - posX[i];
-            const dy: number = posY[j] - posY[i];
+    particles.forEach(particle => {
+        particles.forEach(neighbor => {
+            const dx: number = neighbor.position.x - particle.position.x;
+            const dy: number = neighbor.position.y - particle.position.y;
             const r2: number = dx * dx + dy * dy;
             
-            if (r2 < H2) {
+            if (r2 < Constants.H2) {
                 // Compute density with Poly6 kernel
-                density[i] += MASS * POLY6 * Math.pow(H2 - r2, 3);
+                particle.density += Constants.MASS * Constants.POLY6 * Math.pow(Constants.H2 - r2, 3);
             }
-        }
+        });
         
         // Compute pressure using equation of state
-        pressure[i] = GAS_CONSTANT * (density[i] - REST_DENSITY);
-    }
+        particle.pressure = Constants.GAS_CONSTANT * (particle.density - Constants.REST_DENSITY);
+    });
 }
 
-function computeForces(): void {
-    // Reset forces to zero
-    forceX.fill(0);
-    forceY.fill(0);
+function computeForces(particles: Particle[], gravity: number, interaction: InteractionState): void {
+    // Reset forces
+    particles.forEach(particle => {
+        particle.force = { x: 0, y: 0 };
+    });
     
     // Compute forces for each particle
-    for (let i = 0; i < particleCount; i++) {
+    particles.forEach(particle => {
         // Compute pressure and viscosity forces
-        for (let j = 0; j < particleCount; j++) {
-            if (i === j) continue;
+        particles.forEach(neighbor => {
+            if (particle === neighbor) return;
             
-            const dx: number = posX[j] - posX[i];
-            const dy: number = posY[j] - posY[i];
+            const dx: number = neighbor.position.x - particle.position.x;
+            const dy: number = neighbor.position.y - particle.position.y;
             const r2: number = dx * dx + dy * dy;
             
-            if (r2 < H2) {
+            if (r2 < Constants.H2) {
                 const r: number = Math.sqrt(r2);
                 const factor: number = (r > 0) ? 1 / r : 0;
                 
@@ -198,100 +241,217 @@ function computeForces(): void {
                 const ny: number = dy * factor;
                 
                 // Pressure force
-                const pressureForce: number = -MASS * (pressure[i] + pressure[j]) / 
-                    (2 * density[j]) * SPIKY_GRAD * Math.pow(H - r, 2);
-                forceX[i] += pressureForce * nx;
-                forceY[i] += pressureForce * ny;
+                const pressureForce: number = -Constants.MASS * (particle.pressure + neighbor.pressure) / 
+                    (2 * neighbor.density) * Constants.SPIKY_GRAD * Math.pow(Constants.H - r, 2);
+                particle.force.x += pressureForce * nx;
+                particle.force.y += pressureForce * ny;
                 
                 // Viscosity force
-                const vx: number = velX[j] - velX[i];
-                const vy: number = velY[j] - velY[i];
-                const viscForce: number = VISCOSITY * MASS * VISC_LAP * (H - r) / density[j];
-                forceX[i] += viscForce * vx;
-                forceY[i] += viscForce * vy;
+                const vx: number = neighbor.velocity.x - particle.velocity.x;
+                const vy: number = neighbor.velocity.y - particle.velocity.y;
+                const viscForce: number = Constants.VISCOSITY * Constants.MASS * 
+                    Constants.VISC_LAP * (Constants.H - r) / neighbor.density;
+                particle.force.x += viscForce * vx;
+                particle.force.y += viscForce * vy;
             }
-        }
+        });
         
         // Gravity force
-        forceY[i] += gravity;
+        particle.force.y += gravity;
         
         // Mouse interaction
-        if (isDragging) {
-            const dx: number = mouseX - posX[i];
-            const dy: number = mouseY - posY[i];
+        if (interaction.isDragging) {
+            const dx: number = interaction.position.x - particle.position.x;
+            const dy: number = interaction.position.y - particle.position.y;
             const r2: number = dx * dx + dy * dy;
-            const dragRadius: number = 50 * 50;
+            const dragRadius: number = 2500; // 50^2
             
             if (r2 < dragRadius) {
                 const factor: number = 1.0 - Math.sqrt(r2) / 50;
-                forceX[i] += dragForceX * factor * 500;
-                forceY[i] += dragForceY * factor * 500;
+                particle.force.x += interaction.dragForce.x * factor * 500;
+                particle.force.y += interaction.dragForce.y * factor * 500;
             }
         }
-    }
+    });
 }
 
-function integrate(): void {
+function integrateParticles(particles: Particle[]): void {
     // Update positions, velocities, and handle boundaries
-    for (let i = 0; i < particleCount; i++) {
+    particles.forEach(particle => {
         // Forward Euler integration
-        velX[i] += DT * forceX[i] / density[i];
-        velY[i] += DT * forceY[i] / density[i];
+        particle.velocity.x += Constants.DT * particle.force.x / particle.density;
+        particle.velocity.y += Constants.DT * particle.force.y / particle.density;
         
-        posX[i] += DT * velX[i];
-        posY[i] += DT * velY[i];
+        particle.position.x += Constants.DT * particle.velocity.x;
+        particle.position.y += Constants.DT * particle.velocity.y;
         
         // Boundary conditions
-        if (posX[i] < -WIDTH/2) {
-            velX[i] *= BOUND_DAMPING;
-            posX[i] = -WIDTH/2;
+        if (particle.position.x < -Constants.WIDTH/2) {
+            particle.velocity.x *= Constants.BOUND_DAMPING;
+            particle.position.x = -Constants.WIDTH/2;
         }
         
-        if (posX[i] > WIDTH/2) {
-            velX[i] *= BOUND_DAMPING;
-            posX[i] = WIDTH/2;
+        if (particle.position.x > Constants.WIDTH/2) {
+            particle.velocity.x *= Constants.BOUND_DAMPING;
+            particle.position.x = Constants.WIDTH/2;
         }
         
-        if (posY[i] < -HEIGHT/2) {
-            velY[i] *= BOUND_DAMPING;
-            posY[i] = -HEIGHT/2;
+        if (particle.position.y < -Constants.HEIGHT/2) {
+            particle.velocity.y *= Constants.BOUND_DAMPING;
+            particle.position.y = -Constants.HEIGHT/2;
         }
         
-        if (posY[i] > HEIGHT/2) {
-            velY[i] *= BOUND_DAMPING;
-            posY[i] = HEIGHT/2;
+        if (particle.position.y > Constants.HEIGHT/2) {
+            particle.velocity.y *= Constants.BOUND_DAMPING;
+            particle.position.y = Constants.HEIGHT/2;
         }
         
         // Update mesh position
-        const mesh: THREE.Mesh = particleMeshes[i];
-        mesh.position.set(posX[i], posY[i], 0);
+        updateParticleMeshPosition(particle);
         
         // Update color based on pressure
-        const pressureColor: number = Math.min(1.0, pressure[i] / (GAS_CONSTANT * REST_DENSITY));
-        const material = mesh.material as THREE.MeshBasicMaterial;
-        material.color.setRGB(
-            0.2 + pressureColor * 0.8,
-            0.4 + (1.0 - pressureColor) * 0.5,
-            0.8 + (1.0 - pressureColor) * 0.2
-        );
-    }
+        const pressureColor: number = Math.min(1.0, particle.pressure / (Constants.GAS_CONSTANT * Constants.REST_DENSITY));
+        updateParticleColor(particle, pressureColor);
+    });
 }
 
-// Animation loop
-function animate(): void {
-    requestAnimationFrame(animate);
+function simulationStep(simulation: SimulationState): void {
+    if (!simulation.isRunning) return;
     
-    if (isRunning) {
-        computeDensityPressure();
-        computeForces();
-        integrate();
-    }
+    computeDensityPressure(simulation.particles);
+    computeForces(simulation.particles, simulation.gravity, simulation.interaction);
+    integrateParticles(simulation.particles);
+}
+
+function renderSimulation(simulation: SimulationState): void {
+    simulation.renderer.render(simulation.scene, simulation.camera);
+}
+
+function startAnimationLoop(simulation: SimulationState): void {
+    const animate = () => {
+        requestAnimationFrame(animate);
+        
+        if (simulation.isRunning) {
+            simulationStep(simulation);
+        }
+        
+        renderSimulation(simulation);
+    };
     
-    renderer.render(scene, camera);
+    animate();
+}
+
+// Interaction Helpers
+function getMousePosition(renderer: THREE.WebGLRenderer, event: MouseEvent): Vector2D {
+    const rect = renderer.domElement.getBoundingClientRect();
+    return {
+        x: ((event.clientX - rect.left) / rect.width) * Constants.WIDTH - Constants.WIDTH/2,
+        y: -((event.clientY - rect.top) / rect.height) * Constants.HEIGHT + Constants.HEIGHT/2
+    };
+}
+
+function getTouchPosition(renderer: THREE.WebGLRenderer, touch: Touch): Vector2D {
+    const rect = renderer.domElement.getBoundingClientRect();
+    return {
+        x: ((touch.clientX - rect.left) / rect.width) * Constants.WIDTH - Constants.WIDTH/2,
+        y: -((touch.clientY - rect.top) / rect.height) * Constants.HEIGHT + Constants.HEIGHT/2
+    };
+}
+
+// Setup interaction controls
+function setupInteractionControls(simulation: SimulationState): void {
+    const { renderer, interaction } = simulation;
+    
+    // Mouse interaction
+    renderer.domElement.addEventListener('mousedown', (e: MouseEvent) => {
+        const position = getMousePosition(renderer, e);
+        startDrag(interaction, position);
+    });
+    
+    renderer.domElement.addEventListener('mousemove', (e: MouseEvent) => {
+        if (interaction.isDragging) {
+            const position = getMousePosition(renderer, e);
+            updateDrag(interaction, position);
+        }
+    });
+    
+    renderer.domElement.addEventListener('mouseup', () => {
+        endDrag(interaction);
+    });
+    
+    renderer.domElement.addEventListener('mouseleave', () => {
+        endDrag(interaction);
+    });
+    
+    // Touch support
+    renderer.domElement.addEventListener('touchstart', (e: TouchEvent) => {
+        e.preventDefault();
+        const position = getTouchPosition(renderer, e.touches[0]);
+        startDrag(interaction, position);
+    });
+    
+    renderer.domElement.addEventListener('touchmove', (e: TouchEvent) => {
+        e.preventDefault();
+        if (interaction.isDragging) {
+            const position = getTouchPosition(renderer, e.touches[0]);
+            updateDrag(interaction, position);
+        }
+    });
+    
+    renderer.domElement.addEventListener('touchend', () => {
+        endDrag(interaction);
+    });
+}
+
+// Window resize handler
+function handleWindowResize(simulation: SimulationState): void {
+    const simulationElement = simulation.renderer.domElement.parentElement;
+    if (!simulationElement) return;
+    
+    const width: number = Math.min(600, window.innerWidth - 40);
+    const height: number = (width / 600) * 400;
+    
+    simulation.renderer.setSize(width, height);
+    
+    simulation.camera.left = -width / 2;
+    simulation.camera.right = width / 2;
+    simulation.camera.top = height / 2;
+    simulation.camera.bottom = -height / 2;
+    simulation.camera.updateProjectionMatrix();
+}
+
+// Public API functions
+function toggleSimulation(simulation: SimulationState): boolean {
+    simulation.isRunning = !simulation.isRunning;
+    return simulation.isRunning;
+}
+
+function resetSimulation(simulation: SimulationState): void {
+    initParticles(simulation, simulation.particles.length);
+}
+
+function setGravity(simulation: SimulationState, value: number): void {
+    simulation.gravity = value;
+}
+
+function setParticleCount(simulation: SimulationState, count: number): void {
+    initParticles(simulation, count);
+}
+
+function getParticleCount(simulation: SimulationState): number {
+    return simulation.particles.length;
+}
+
+function getIsRunning(simulation: SimulationState): boolean {
+    return simulation.isRunning;
+}
+
+function getGravity(simulation: SimulationState): number {
+    return simulation.gravity;
 }
 
 // UI Controls setup
-function setupUIControls(): void {
+function setupUIControls(simulation: SimulationState): void {
     const playPauseButton = document.getElementById('playPause');
     const resetButton = document.getElementById('reset');
     const gravitySlider = document.getElementById('gravitySlider') as HTMLInputElement;
@@ -301,7 +461,7 @@ function setupUIControls(): void {
     
     if (playPauseButton) {
         playPauseButton.addEventListener('click', () => {
-            isRunning = !isRunning;
+            const isRunning = toggleSimulation(simulation);
             playPauseButton.textContent = isRunning ? 'Pause' : 'Resume';
             playPauseButton.classList.toggle('pause', isRunning);
         });
@@ -309,113 +469,57 @@ function setupUIControls(): void {
     
     if (resetButton) {
         resetButton.addEventListener('click', () => {
-            initParticles();
+            resetSimulation(simulation);
         });
     }
     
     if (gravitySlider && gravityValue) {
+        // Set initial value
+        gravitySlider.value = getGravity(simulation).toString();
+        gravityValue.textContent = getGravity(simulation).toString();
+        
         gravitySlider.addEventListener('input', (e: Event) => {
             const target = e.target as HTMLInputElement;
-            gravity = parseFloat(target.value);
-            gravityValue.textContent = gravity.toString();
+            const value = parseFloat(target.value);
+            setGravity(simulation, value);
+            gravityValue.textContent = value.toString();
         });
     }
     
     if (particleSlider && particleValue) {
+        // Set initial value
+        particleSlider.value = getParticleCount(simulation).toString();
+        particleValue.textContent = getParticleCount(simulation).toString();
+        
         particleSlider.addEventListener('input', (e: Event) => {
             const target = e.target as HTMLInputElement;
-            particleCount = parseInt(target.value);
-            particleValue.textContent = particleCount.toString();
+            const value = parseInt(target.value);
+            setParticleCount(simulation, value);
+            particleValue.textContent = value.toString();
         });
     }
 }
 
-// Mouse and touch interaction setup
-function setupInteractionControls(): void {
-    // Mouse interaction
-    renderer.domElement.addEventListener('mousedown', (e: MouseEvent) => {
-        isDragging = true;
-        updateMousePosition(e);
-    });
-    
-    renderer.domElement.addEventListener('mousemove', (e: MouseEvent) => {
-        if (isDragging) {
-            const lastX: number = mouseX;
-            const lastY: number = mouseY;
-            updateMousePosition(e);
-            dragForceX = mouseX - lastX;
-            dragForceY = mouseY - lastY;
-        }
-    });
-    
-    renderer.domElement.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
-    
-    renderer.domElement.addEventListener('mouseleave', () => {
-        isDragging = false;
-    });
-    
-    // Touch support
-    renderer.domElement.addEventListener('touchstart', (e: TouchEvent) => {
-        e.preventDefault();
-        isDragging = true;
-        updateTouchPosition(e.touches[0]);
-    });
-    
-    renderer.domElement.addEventListener('touchmove', (e: TouchEvent) => {
-        e.preventDefault();
-        if (isDragging) {
-            const lastX: number = mouseX;
-            const lastY: number = mouseY;
-            updateTouchPosition(e.touches[0]);
-            dragForceX = mouseX - lastX;
-            dragForceY = mouseY - lastY;
-        }
-    });
-    
-    renderer.domElement.addEventListener('touchend', () => {
-        isDragging = false;
-    });
-}
-
-// Helper functions for mouse/touch interaction
-function updateMousePosition(e: MouseEvent): void {
-    const rect = renderer.domElement.getBoundingClientRect();
-    mouseX = ((e.clientX - rect.left) / rect.width) * WIDTH - WIDTH/2;
-    mouseY = -((e.clientY - rect.top) / rect.height) * HEIGHT + HEIGHT/2;
-}
-
-function updateTouchPosition(touch: Touch): void {
-    const rect = renderer.domElement.getBoundingClientRect();
-    mouseX = ((touch.clientX - rect.left) / rect.width) * WIDTH - WIDTH/2;
-    mouseY = -((touch.clientY - rect.top) / rect.height) * HEIGHT + HEIGHT/2;
-}
-
-// Window resize handler
-function onWindowResize(): void {
-    const simulationElement = document.getElementById('simulation');
-    if (!simulationElement) return;
-    
-    const width: number = Math.min(600, window.innerWidth - 40);
-    const height: number = (width / 600) * 400;
-    
-    renderer.setSize(width, height);
-    
-    camera.left = -width / 2;
-    camera.right = width / 2;
-    camera.top = height / 2;
-    camera.bottom = -height / 2;
-    camera.updateProjectionMatrix();
-}
-
 // Initialize the application
-document.addEventListener('DOMContentLoaded', init);
+function initializeApplication(containerId: string): SimulationState {
+    // Create simulation
+    const simulation = createSimulation(containerId, 150, 12000);
+    
+    // Setup interaction
+    setupInteractionControls(simulation);
+    
+    // Handle window resize
+    window.addEventListener('resize', () => handleWindowResize(simulation));
+    handleWindowResize(simulation);
+    
+    // Start animation loop
+    startAnimationLoop(simulation);
+    
+    return simulation;
+}
 
-// Export functions for external access if needed
-export {
-    initParticles,
-    isRunning,
-    gravity,
-    particleCount
-};
+// Main entry point
+document.addEventListener('DOMContentLoaded', () => {
+    const simulation = initializeApplication('simulation');
+    setupUIControls(simulation);
+});
