@@ -5,27 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2D SPH Simulation with Three.js</title>
 </head>
-<body>
-    <div id="container">
-        <h1>2D SPH Fluid Simulation</h1>
-        <div id="simulation"></div>
-        <div class="controls">
-            <button id="playPause">Pause</button>
-            <div class="control-group">
-                <label for="gravitySlider">Gravity: <span id="gravityValue">12000</span></label>
-                <input type="range" id="gravitySlider" min="0" max="20000" value="12000">
-            </div>
-            <div class="control-group">
-                <label for="particleSlider">Particles: <span id="particleValue">150</span></label>
-                <input type="range" id="particleSlider" min="50" max="500" value="150">
-            </div>
-            <button id="reset">Reset Simulation</button>
-        </div>
-        <div class="info">
-            <p>This is a 2D SPH (Smoothed Particle Hydrodynamics) simulation using pure Three.js.</p>
-            <p>Particle colors represent pressure distribution in the fluid.</p>
-        </div>
-    </div>
+<body style="margin:0px">
     <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
