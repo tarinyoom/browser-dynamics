@@ -38,6 +38,10 @@ const sphere2 = new THREE.Mesh(geometry2, material2);
 sphere2.position.set(1.0, 0.0, 0.0);
 scene.add(sphere2);
 
+function updatePosition(s: THREE.Mesh) {
+    s.position.x += 0.01;
+}
+
 // Handle window resizing
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -47,6 +51,7 @@ window.addEventListener('resize', () => {
 
 // Animation loop
 function animate() {
+    updatePosition(sphere2);
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
 }
