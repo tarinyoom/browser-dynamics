@@ -1,13 +1,8 @@
-// index.ts
-
 import * as THREE from 'three';
-import { TIMESTEP, MAX_TIMESTEPS_PER_FRAME } from './constants';
+import { TIMESTEP, MAX_TIMESTEPS_PER_FRAME, NUM_PARTICLES, DIM } from './constants';
 import { step } from './step'; 
 import { createRenderer, createCamera, createScene, createParticles } from './render';
 
-// Simulation parameters
-const NUM_PARTICLES = 1000;
-const DIM = 3;
 
 const positions = new Float32Array(NUM_PARTICLES * DIM);
 const velocities = new Float32Array(NUM_PARTICLES * DIM);
