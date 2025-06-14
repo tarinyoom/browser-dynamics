@@ -1,6 +1,7 @@
 // index.ts
 
 import * as THREE from 'three';
+import { TIMESTEP, MAX_TIMESTEPS_PER_FRAME } from './constants';
 import { step } from './step'; 
 import { createRenderer, createCamera, createScene, createParticles } from './render';
 
@@ -38,9 +39,6 @@ function init() {
   animate();
 }
 
-const FIXED_DELTA = 1 / 60;
-const MAX_STEPS = 5;
-
 let accumulator = 0;
 const clock = new THREE.Clock();
 
@@ -52,9 +50,9 @@ function animate() {
 
   // If accumulator is too large, step physics up to MAX_STEPS forward
   let steps = 0;
-  while (accumulator >= FIXED_DELTA && steps < MAX_STEPS) {
+  while (accumulator >= TIMESTEP && steps < MAX_TIMESTEPS_PER_FRAME) {
     step(positions, velocities); // Mutates positions and velocities in-place
-    accumulator -= FIXED_DELTA;
+    accumulator -= TIMESTEP;
     steps++;
   }
 
