@@ -38,10 +38,25 @@ function init() {
   animate();
 }
 
+const FIXED_DELTA = 1 / 60;
+const MAX_STEPS = 5;
+
+let accumulator = 0;
+const clock = new THREE.Clock();
+
 function animate() {
   requestAnimationFrame(animate);
 
-  step(positions, velocities); // Mutates positions and velocities in-place
+  let frameTime = clock.getDelta();
+  accumulator += frameTime;
+
+  // If accumulator is too large, step physics up to MAX_STEPS forward
+  let steps = 0;
+  while (accumulator >= FIXED_DELTA && steps < MAX_STEPS) {
+    step(positions, velocities); // Mutates positions and velocities in-place
+    accumulator -= FIXED_DELTA;
+    steps++;
+  }
 
   const geometry = particles.geometry as THREE.BufferGeometry;
   const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
