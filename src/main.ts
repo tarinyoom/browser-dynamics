@@ -1,59 +1,67 @@
+// index.ts
+
 import * as THREE from 'three';
+import { step } from './step'; 
+import { createRenderer, createCamera, createScene, createParticles } from './render';
 
-// Set up renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x000000); // Set background to black
-document.body.appendChild(renderer.domElement);
+// Simulation parameters
+const NUM_PARTICLES = 1000;
+const DIM = 3;
 
-// Set up scene
-const scene = new THREE.Scene();
+const positions = new Float32Array(NUM_PARTICLES * DIM);
+const velocities = new Float32Array(NUM_PARTICLES * DIM);
 
-// Set up camera
-const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-);
-camera.position.z = 5;
+initSimulation(positions, velocities);
 
-// Add a light
-const light2 = new THREE.AmbientLight(0xaaaaff, 0.3);
-scene.add(light2);
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(5, 5, 5);
-scene.add(light);
+let renderer: THREE.WebGLRenderer;
+let camera: THREE.PerspectiveCamera;
+let scene: THREE.Scene;
+let particles: THREE.Points;
 
-// Create a white sphere geometry
-const geometry = new THREE.SphereGeometry(1, 32, 32);
-const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
-const sphere = new THREE.Mesh(geometry, material);
-scene.add(sphere);
+function init() {
+  const container = document.getElementById('app');
+  if (!container) throw new Error("Missing #app container");
 
-// Create a small sphere geometry
-const geometry2 = new THREE.SphereGeometry(0.1, 16, 16);
-const material2 = new THREE.MeshStandardMaterial({ color: 0x888888});
-const sphere2 = new THREE.Mesh(geometry2, material2);
-sphere2.position.set(1.0, 0.0, 0.0);
-scene.add(sphere2);
+  renderer = createRenderer(container);
+  camera = createCamera(container.clientWidth / container.clientHeight);
+  scene = createScene();
 
-function updatePosition(s: THREE.Mesh) {
-    s.position.x += 0.01;
-}
+  particles = createParticles(positions);
+  scene.add(particles);
 
-// Handle window resizing
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+  window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
 
-// Animation loop
-function animate() {
-    updatePosition(sphere2);
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
+  animate();
 }
 
-animate();
+function animate() {
+  requestAnimationFrame(animate);
+
+  step(positions, velocities); // Mutates positions and velocities in-place
+
+  const geometry = particles.geometry as THREE.BufferGeometry;
+  const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
+  posAttr.copyArray(positions); // Efficient in-place copy
+  posAttr.needsUpdate = true;
+
+  renderer.render(scene, camera);
+}
+
+function initSimulation(pos: Float32Array, vel: Float32Array) {
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    pos[i * 3 + 0] = (Math.random() - 0.5) * 2;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 2;
+    pos[i * 3 + 2] = (Math.random() - 0.5) * 2;
+
+    vel[i * 3 + 0] = 0;
+    vel[i * 3 + 1] = 0;
+    vel[i * 3 + 2] = 0;
+  }
+}
+
+init();
+
