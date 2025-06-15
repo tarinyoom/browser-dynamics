@@ -61,13 +61,14 @@ function animate() {
 
 function initSimulation(pos: Float32Array, vel: Float32Array) {
   for (let i = 0; i < NUM_PARTICLES; i++) {
-    pos[i * 3 + 0] = (Math.random() - 0.5) * 2;
-    pos[i * 3 + 1] = (Math.random() - 0.5) * 2;
-    pos[i * 3 + 2] = (Math.random() - 0.5) * 2;
-
-    vel[i * 3 + 0] = 0;
-    vel[i * 3 + 1] = 0;
-    vel[i * 3 + 2] = 0;
+    for (let j = 0; j < DIM; j++) {
+      pos[i * 3 + j] = (Math.random() - 0.5) * 2;
+      vel[i * 3 + j] = 0;
+    }
+    for (let j = DIM; j < 3; j++) {
+      pos[i * 3 + j] = 0;
+      vel[i * 3 + j] = 0;
+    }
   }
 }
 
