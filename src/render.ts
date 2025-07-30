@@ -4,10 +4,32 @@ import * as THREE from 'three';
  * Sets up the WebGLRenderer and appends it to the container.
  */
 export function createRenderer(container: HTMLElement): THREE.WebGLRenderer {
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   container.appendChild(renderer.domElement);
+
+  const canvas = renderer.domElement;
+  const stream = canvas.captureStream(60);
+  const recorder = new MediaRecorder(stream);
+  const chunks: BlobPart[] = [];
+
+  recorder.ondataavailable = e => {
+    if (e.data.size > 0) chunks.push(e.data);
+  };
+
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: "video/webm" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sph.webm";
+    a.click();
+  };
+
+  // Start and stop as needed
+  recorder.start();
+  setTimeout(() => recorder.stop(), 5000); // 5s recording
   return renderer;
 }
 
@@ -28,7 +50,7 @@ export function createCamera(aspectRatio: number): THREE.PerspectiveCamera {
  */
 export function createScene(): THREE.Scene {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x111122);
+  scene.background = new THREE.Color(0x000000);
 
   const ambient = new THREE.AmbientLight(0xffffff, 1.0);
   scene.add(ambient);
