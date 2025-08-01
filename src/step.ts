@@ -1,7 +1,7 @@
 import { TIMESTEP, NUM_PARTICLES, DIM } from './constants';
 
-const BOX_MIN = -1.0;
-const BOX_MAX = 1.0;
+const BOX_MIN = -1.6;
+const BOX_MAX = 1.6;
 const GRAVITY = -1.0;
 
 export function step(positions: Float32Array, velocities: Float32Array) {
