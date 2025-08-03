@@ -19,10 +19,10 @@ export function randomize(model: Model) {
   }
 }
 
-export function step(positions: Float32Array, velocities: Float32Array) {
+export function step(model: Model) {
   for (let i = 0; i < NUM_PARTICLES; i++) {
-    const pos = positions.subarray(i * 3, (i + 1) * 3);
-    const vel = velocities.subarray(i * 3, (i + 1) * 3);
+    const pos = model.positions.subarray(i * 3, (i + 1) * 3);
+    const vel = model.velocities.subarray(i * 3, (i + 1) * 3);
 
     // Apply gravity (only y-axis)
     vel[1] += GRAVITY * TIMESTEP;

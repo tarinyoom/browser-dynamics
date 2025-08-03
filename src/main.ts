@@ -51,6 +51,7 @@ function drawFrame(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: TH
     console.log(`Rendered frame with ${positions.length / 3} particles`);
   }
 }
+
 function makeAnimation(model: Model) {
   const animation = () => {
     requestAnimationFrame(animation);
@@ -61,7 +62,7 @@ function makeAnimation(model: Model) {
     // If accumulator is too large, step physics up to MAX_STEPS forward
     let steps = 0;
     while (accumulator >= TIMESTEP && steps < MAX_TIMESTEPS_PER_FRAME) {
-      step(model.positions, model.velocities); // Mutates positions and velocities in-place
+      step(model);
       accumulator -= TIMESTEP;
       steps++;
     }
@@ -72,4 +73,3 @@ function makeAnimation(model: Model) {
 }
 
 init();
-
