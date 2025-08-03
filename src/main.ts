@@ -7,7 +7,7 @@ import { isDev } from './env';
 const positions = new Float32Array(NUM_PARTICLES * DIM);
 const velocities = new Float32Array(NUM_PARTICLES * DIM);
 
-initSimulation(positions, velocities);
+initSimulation({positions, velocities} as Model);
 
 let renderer: THREE.WebGLRenderer;
 let camera: THREE.PerspectiveCamera;
@@ -65,17 +65,17 @@ function animate() {
   drawFrame(renderer, scene, camera, positions);
 }
 
-function initSimulation(pos: Float32Array, vel: Float32Array) {
+function initSimulation(model: Model) {
   for (let i = 0; i < NUM_PARTICLES; i++) {
     // Initialize positions and velocities randomly
     for (let j = 0; j < DIM; j++) {
-      pos[i * 3 + j] = (Math.random() - 0.5) * 2;
-      vel[i * 3 + j] = (Math.random() - 0.5) * 1;
+      model.positions[i * 3 + j] = (Math.random() - 0.5) * 2;
+      model.velocities[i * 3 + j] = (Math.random() - 0.5) * 1;
     }
     // Fill in extra dimensions with zero
     for (let j = DIM; j < 3; j++) {
-      pos[i * 3 + j] = 0;
-      vel[i * 3 + j] = 0;
+      model.positions[i * 3 + j] = 0;
+      model.velocities[i * 3 + j] = 0;
     }
   }
 }
