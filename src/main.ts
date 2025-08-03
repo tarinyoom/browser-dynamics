@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { TIMESTEP, MAX_TIMESTEPS_PER_FRAME, NUM_PARTICLES, DIM } from './constants';
-import { step } from './step'; 
+import { randomize, step } from './simulation'; 
 import { createRenderer, createCamera, createScene, createParticles } from './render';
 import { isDev } from './env';
-
 
 function createModel(): Model {
   const positions = new Float32Array(NUM_PARTICLES * DIM);
@@ -27,7 +26,7 @@ function init() {
   scene = createScene();
 
   particles = createParticles(model.positions);
-  initSimulation(model);
+  randomize(model);
   scene.add(particles);
 
   window.addEventListener('resize', () => {
@@ -70,21 +69,6 @@ function makeAnimation(model: Model) {
     drawFrame(renderer, scene, camera, model.positions);
   }
   return animation;
-}
-
-function initSimulation(model: Model) {
-  for (let i = 0; i < NUM_PARTICLES; i++) {
-    // Initialize positions and velocities randomly
-    for (let j = 0; j < DIM; j++) {
-      model.positions[i * 3 + j] = (Math.random() - 0.5) * 2;
-      model.velocities[i * 3 + j] = (Math.random() - 0.5) * 1;
-    }
-    // Fill in extra dimensions with zero
-    for (let j = DIM; j < 3; j++) {
-      model.positions[i * 3 + j] = 0;
-      model.velocities[i * 3 + j] = 0;
-    }
-  }
 }
 
 init();
