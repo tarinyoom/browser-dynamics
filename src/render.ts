@@ -1,16 +1,7 @@
 import * as THREE from 'three';
 
-/**
- * Sets up the WebGLRenderer and appends it to the container.
- */
-export function createRenderer(container: HTMLElement): THREE.WebGLRenderer {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  renderer.setSize(container.clientWidth, container.clientHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  container.appendChild(renderer.domElement);
-
-  const canvas = renderer.domElement;
-  const stream = canvas.captureStream(60);
+function recordAndSave(canvas: HTMLCanvasElement, fps: number, duration: number): void {
+  const stream = canvas.captureStream(fps);
   const recorder = new MediaRecorder(stream);
   const chunks: BlobPart[] = [];
 
@@ -27,9 +18,22 @@ export function createRenderer(container: HTMLElement): THREE.WebGLRenderer {
     a.click();
   };
 
-  // Start and stop as needed
   recorder.start();
-  setTimeout(() => recorder.stop(), 5000); // 5s recording
+  setTimeout(() => recorder.stop(), duration);
+}
+
+/**
+ * Sets up the WebGLRenderer and appends it to the container.
+ */
+export function createRenderer(container: HTMLElement, capture: boolean): THREE.WebGLRenderer {
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+  const canvas = renderer.domElement;
+
+  recordAndSave(canvas, 60, 5000); // Record at 60fps for 5 seconds
+
   return renderer;
 }
 
