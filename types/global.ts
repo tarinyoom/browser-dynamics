@@ -1,7 +1,7 @@
 export {};
 
 declare global {
-  interface Model {
+  interface PersistentState {
     positions: Float32Array;
     velocities: Float32Array;
   }
