@@ -37,6 +37,17 @@ function init() {
 let accumulator = 0;
 const clock = new THREE.Clock();
 
+function drawFrame(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera, positions: Float32Array) {
+  const geometry = particles.geometry as THREE.BufferGeometry;
+  const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
+  posAttr.copyArray(positions);
+  posAttr.needsUpdate = true;
+  renderer.render(scene, camera);
+  if (isDev()) {
+    console.log(`Rendered frame with ${positions.length / 3} particles`);
+  }
+}
+
 function animate() {
   requestAnimationFrame(animate);
 
@@ -51,12 +62,7 @@ function animate() {
     steps++;
   }
 
-  const geometry = particles.geometry as THREE.BufferGeometry;
-  const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
-  posAttr.copyArray(positions); // Efficient in-place copy
-  posAttr.needsUpdate = true;
-
-  renderer.render(scene, camera);
+  drawFrame(renderer, scene, camera, positions);
 }
 
 function initSimulation(pos: Float32Array, vel: Float32Array) {
