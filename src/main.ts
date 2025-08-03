@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TIMESTEP, MAX_TIMESTEPS_PER_FRAME, NUM_PARTICLES, DIM } from './constants';
 import { step } from './step'; 
 import { createRenderer, createCamera, createScene, createParticles } from './render';
-
+import { isDev } from './env';
 
 const positions = new Float32Array(NUM_PARTICLES * DIM);
 const velocities = new Float32Array(NUM_PARTICLES * DIM);
@@ -18,7 +18,7 @@ function init() {
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
-  renderer = createRenderer(container);
+  renderer = createRenderer(container, isDev());
   camera = createCamera(container.clientWidth / container.clientHeight);
   scene = createScene();
 

@@ -25,13 +25,13 @@ function recordAndSave(canvas: HTMLCanvasElement, fps: number, duration: number)
 /**
  * Sets up the WebGLRenderer and appends it to the container.
  */
-export function createRenderer(container: HTMLElement): THREE.WebGLRenderer {
+export function createRenderer(container: HTMLElement, dev: boolean): THREE.WebGLRenderer {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   container.appendChild(renderer.domElement);
 
-  if (import.meta.env.DEV) {
+  if (dev) {
       const canvas = renderer.domElement;
       recordAndSave(canvas, 60, 5000); // Record at 60fps for 5 seconds
   }
