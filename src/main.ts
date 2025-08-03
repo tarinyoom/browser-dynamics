@@ -4,10 +4,12 @@ import { step } from './step';
 import { createRenderer, createCamera, createScene, createParticles } from './render';
 import { isDev } from './env';
 
-const positions = new Float32Array(NUM_PARTICLES * DIM);
-const velocities = new Float32Array(NUM_PARTICLES * DIM);
 
-initSimulation({positions, velocities} as Model);
+function createModel(): Model {
+  const positions = new Float32Array(NUM_PARTICLES * DIM);
+  const velocities = new Float32Array(NUM_PARTICLES * DIM);
+  return { positions, velocities };
+}
 
 let renderer: THREE.WebGLRenderer;
 let camera: THREE.PerspectiveCamera;
@@ -18,11 +20,14 @@ function init() {
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
+  const model = createModel();
+
   renderer = createRenderer(container, isDev());
   camera = createCamera(container.clientWidth / container.clientHeight);
   scene = createScene();
 
-  particles = createParticles(positions);
+  particles = createParticles(model.positions);
+  initSimulation(model);
   scene.add(particles);
 
   window.addEventListener('resize', () => {
@@ -31,7 +36,7 @@ function init() {
     renderer.setSize(container.clientWidth, container.clientHeight);
   });
 
-  animate();
+  makeAnimation(model)();
 }
 
 let accumulator = 0;
@@ -47,22 +52,24 @@ function drawFrame(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: TH
     console.log(`Rendered frame with ${positions.length / 3} particles`);
   }
 }
+function makeAnimation(model: Model) {
+  const animation = () => {
+    requestAnimationFrame(animation);
 
-function animate() {
-  requestAnimationFrame(animate);
+    let frameTime = clock.getDelta();
+    accumulator += frameTime;
 
-  let frameTime = clock.getDelta();
-  accumulator += frameTime;
+    // If accumulator is too large, step physics up to MAX_STEPS forward
+    let steps = 0;
+    while (accumulator >= TIMESTEP && steps < MAX_TIMESTEPS_PER_FRAME) {
+      step(model.positions, model.velocities); // Mutates positions and velocities in-place
+      accumulator -= TIMESTEP;
+      steps++;
+    }
 
-  // If accumulator is too large, step physics up to MAX_STEPS forward
-  let steps = 0;
-  while (accumulator >= TIMESTEP && steps < MAX_TIMESTEPS_PER_FRAME) {
-    step(positions, velocities); // Mutates positions and velocities in-place
-    accumulator -= TIMESTEP;
-    steps++;
+    drawFrame(renderer, scene, camera, model.positions);
   }
-
-  drawFrame(renderer, scene, camera, positions);
+  return animation;
 }
 
 function initSimulation(model: Model) {
