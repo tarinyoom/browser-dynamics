@@ -6,7 +6,8 @@ import { isDev } from './env';
 function createArena(): Arena {
   const positions = new Float32Array(globals.numParticles * globals.dim);
   const velocities = new Float32Array(globals.numParticles * globals.dim);
-  return { positions, velocities };
+  const densities = new Float32Array(globals.numParticles);
+  return { positions, velocities, densities };
 }
 
 function makeAnimation(view: View, arena: Arena) {

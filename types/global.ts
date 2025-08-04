@@ -7,6 +7,7 @@ declare global {
   interface Arena {
     positions: Float32Array;
     velocities: Float32Array;
+    densities: Float32Array;
   }
 
   interface CalculationParameters {

@@ -7,6 +7,8 @@ const GRAVITY = -1.0;
 export function randomize(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
 
+    arena.densities[i] = Math.random() * 0.5 + 0.5;
+
     for (let j = 0; j < globals.dim; j++) {
       arena.positions[i * 3 + j] = (Math.random() - 0.5) * 2;
       arena.velocities[i * 3 + j] = (Math.random() - 0.5) * 1;
