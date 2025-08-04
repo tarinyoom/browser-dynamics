@@ -31,7 +31,7 @@ function createRenderer(container: HTMLElement, dev: boolean): THREE.WebGLRender
 
   if (dev) {
       const canvas = renderer.domElement;
-      recordAndSave(canvas, 60, 5000); // Record at 60fps for 5 seconds
+      recordAndSave(canvas, 60, 5000);
   }
 
   return renderer;
@@ -57,7 +57,7 @@ function createScene(): THREE.Scene {
 }
 
 function createParticles(count: number): THREE.Points {
-  const positions = new Float32Array(count * 3); // initially all zeros
+  const positions = new Float32Array(count * globals.dim); 
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));

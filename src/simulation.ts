@@ -6,12 +6,12 @@ const GRAVITY = -1.0;
 
 export function randomize(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
-    // Initialize positions and velocities randomly
+
     for (let j = 0; j < globals.dim; j++) {
       arena.positions[i * 3 + j] = (Math.random() - 0.5) * 2;
       arena.velocities[i * 3 + j] = (Math.random() - 0.5) * 1;
     }
-    // Fill in extra dimensions with zero
+
     for (let j = globals.dim; j < 3; j++) {
       arena.positions[i * 3 + j] = 0;
       arena.velocities[i * 3 + j] = 0;
@@ -24,14 +24,11 @@ export function step(arena: Arena) {
     const pos = arena.positions.subarray(i * 3, (i + 1) * 3);
     const vel = arena.velocities.subarray(i * 3, (i + 1) * 3);
 
-    // Apply gravity (only y-axis)
     vel[1] += GRAVITY * globals.timestep;
 
-    // Update position
-    pos[0] += vel[0] * globals.timestep; // x
-    pos[1] += vel[1] * globals.timestep; // y
+    pos[0] += vel[0] * globals.timestep;
+    pos[1] += vel[1] * globals.timestep;
 
-    // Wall collisions
     for (let j = 0; j < globals.dim; j++) {
       if (pos[j] < BOX_MIN) {
         pos[j] = BOX_MIN;

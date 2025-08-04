@@ -18,7 +18,6 @@ function makeAnimation(view: View, arena: Arena) {
     let frameTime = view.clock.getDelta();
     accumulator += frameTime;
 
-    // If accumulator is too large, step physics up to MAX_STEPS forward
     let steps = 0;
     while (accumulator >= globals.timestep && steps < globals.maxTimestepsPerFrame) {
       step(arena);
