@@ -53,7 +53,7 @@ function accumulateDensities(arena: Arena) {
     const dz = arena.positions[i * 3 + 2] - arena.positions[2];
 
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    arena.densities[i] += kernel(d) * 0.5;
+    arena.densities[i] += kernel(d) * 0.2;
   }
 }
 
