@@ -24,16 +24,12 @@ export function randomize(arena: Arena) {
 export function step(arena: Arena) {
 
   for (let i = 0; i < globals.numParticles; i++) {
-    const vel = arena.velocities.subarray(i * 3, (i + 1) * 3);
-    vel[1] += GRAVITY * globals.timestep;
+    arena.velocities[i * 3 + 1] += GRAVITY * globals.timestep;
   }
 
   for (let i = 0; i < globals.numParticles; i++) {
-    const pos = arena.positions.subarray(i * 3, (i + 1) * 3);
-    const vel = arena.velocities.subarray(i * 3, (i + 1) * 3);
-
-    pos[0] += vel[0] * globals.timestep;
-    pos[1] += vel[1] * globals.timestep;
+    arena.positions[i * 3] += arena.velocities[i * 3] * globals.timestep;
+    arena.positions[i * 3 + 1] += arena.velocities[i * 3 + 1] * globals.timestep;
   }
 
   for (let i = 0; i < globals.numParticles; i++) {
