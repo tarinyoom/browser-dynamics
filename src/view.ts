@@ -94,13 +94,24 @@ export function drawFrame(view: View, positions: Float32Array, densities: Float3
 
   const colorAttr = geometry.getAttribute('color') as THREE.BufferAttribute;
   const colors = colorAttr.array as Float32Array;
-  
-  for (let i = 0; i < densities.length; i++) {
-    const norm = densities[i] * 0.8 + 0.2;
 
-    const r = norm;
-    const g = norm;
-    const b = 1.0;
+  let r, g, b;
+
+  for (let i = 0; i < densities.length; i++) {
+    const t = densities[i];
+
+    // [0, 1] -> [hot, cold] color mapping
+    if (t < 0.5) {
+      const localT = t / 0.5;
+      r = 0;
+      g = Math.round(1 * localT);
+      b = 1;
+    } else {
+      const localT = (t - 0.5) / 0.5;
+      r = 1;
+      g = Math.round(1 * (1 - localT));
+      b = 0;
+    }
 
     colors[3 * i]     = r;
     colors[3 * i + 1] = g;
