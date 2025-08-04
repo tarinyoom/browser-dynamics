@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { globals } from './constants';
 import { randomize, step } from './simulation'; 
-import { createView, drawFrame } from './render';
+import { createView, drawFrame } from './view';
 import { isDev } from './env';
 
 function createArena(): Arena {
