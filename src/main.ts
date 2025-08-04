@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import { TIMESTEP, MAX_TIMESTEPS_PER_FRAME, NUM_PARTICLES, DIM } from './constants';
+import { globals } from './constants';
 import { randomize, step } from './simulation'; 
 import { createRenderer, createCamera, createScene, createParticles } from './render';
 import { isDev } from './env';
 
 function createArena(): Arena {
-  const positions = new Float32Array(NUM_PARTICLES * DIM);
-  const velocities = new Float32Array(NUM_PARTICLES * DIM);
+  const positions = new Float32Array(globals.numParticles * globals.dim);
+  const velocities = new Float32Array(globals.numParticles * globals.dim);
   return { positions, velocities };
 }
 
@@ -61,9 +61,9 @@ function makeAnimation(arena: Arena) {
 
     // If accumulator is too large, step physics up to MAX_STEPS forward
     let steps = 0;
-    while (accumulator >= TIMESTEP && steps < MAX_TIMESTEPS_PER_FRAME) {
+    while (accumulator >= globals.timestep && steps < globals.maxTimestepsPerFrame) {
       step(arena);
-      accumulator -= TIMESTEP;
+      accumulator -= globals.timestep;
       steps++;
     }
 
