@@ -47,13 +47,13 @@ function kernel(r: number): number {
 
 function accumulateDensities(arena: Arena) {
 
-  for (let i = 1; i < globals.numParticles; i++) {
+  for (let i = 0; i < globals.numParticles; i++) {
     const dx = arena.positions[i * 3]     - arena.positions[0];
     const dy = arena.positions[i * 3 + 1] - arena.positions[1];
     const dz = arena.positions[i * 3 + 2] - arena.positions[2];
 
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    arena.densities[0] += kernel(d) * .005;
+    arena.densities[i] += kernel(d) * 0.5;
   }
 }
 
