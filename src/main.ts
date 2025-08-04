@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { globals } from './constants';
 import { randomize, step } from './simulation'; 
 import { createView, drawFrame } from './view';
@@ -29,13 +28,12 @@ function init() {
 }
 
 let accumulator = 0;
-const clock = new THREE.Clock();
 
 function makeAnimation(view: View, arena: Arena) {
   const animation = () => {
     requestAnimationFrame(animation);
 
-    let frameTime = clock.getDelta();
+    let frameTime = view.clock.getDelta();
     accumulator += frameTime;
 
     // If accumulator is too large, step physics up to MAX_STEPS forward

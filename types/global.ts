@@ -1,4 +1,4 @@
-import { WebGLRenderer, PerspectiveCamera, Scene, Points } from 'three';
+import { WebGLRenderer, PerspectiveCamera, Scene, Points, Clock } from 'three';
 
 export {};
 
@@ -21,6 +21,7 @@ declare global {
     camera: PerspectiveCamera;
     scene: Scene;
     particles: Points;
+    clock: Clock;
   }
 
 }

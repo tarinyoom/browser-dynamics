@@ -76,10 +76,11 @@ export function createView(container: HTMLElement, dev: boolean): View {
   const camera = createCamera(container.clientWidth / container.clientHeight);
   const scene = createScene();
   const particles = createParticles(globals.numParticles);
+  const clock = new THREE.Clock();
 
   scene.add(particles);
 
-  return { renderer, camera, scene, particles };
+  return { renderer, camera, scene, particles, clock };
 }
 
 export function drawFrame(view: View, positions: Float32Array) {
