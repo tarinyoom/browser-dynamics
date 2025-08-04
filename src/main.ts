@@ -4,8 +4,8 @@ import { createView, drawFrame } from './view';
 import { isDev } from './env';
 
 function createArena(): Arena {
-  const positions = new Float32Array(globals.numParticles * globals.dim);
-  const velocities = new Float32Array(globals.numParticles * globals.dim);
+  const positions = new Float32Array(globals.numParticles * 3);
+  const velocities = new Float32Array(globals.numParticles * 3);
   const densities = new Float32Array(globals.numParticles);
   return { positions, velocities, densities };
 }

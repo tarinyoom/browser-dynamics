@@ -57,7 +57,7 @@ function createScene(): THREE.Scene {
 }
 
 function createParticles(count: number): THREE.Points {
-  const positions = new Float32Array(count * globals.dim); 
+  const positions = new Float32Array(count * 3); 
   const colors = new Float32Array(count * 3);
 
   const geometry = new THREE.BufferGeometry();

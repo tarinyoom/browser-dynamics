@@ -27,9 +27,33 @@ function resetDensities(arena: Arena) {
   }
 }
 
+function kernel(r: number): number {
+  const h = 0.2;
+
+  const norm = 10 / (7 * Math.PI * h * h);
+  const invH = 1.0 / h;
+
+  const q = r * invH;
+
+  if (q >= 2) return 0;
+  if (q < 1) {
+    return norm * (1 - 1.5 * q * q + 0.75 * q * q * q);
+  } else {
+    const term = 2 - q;
+    return norm * 0.25 * term * term * term;
+  }
+
+}
+
 function accumulateDensities(arena: Arena) {
-  for (let i = 0; i < globals.numParticles; i++) {
-    arena.densities[i] = Math.random();
+
+  for (let i = 1; i < globals.numParticles; i++) {
+    const dx = arena.positions[i * 3]     - arena.positions[0];
+    const dy = arena.positions[i * 3 + 1] - arena.positions[1];
+    const dz = arena.positions[i * 3 + 2] - arena.positions[2];
+
+    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    arena.densities[0] += kernel(d) * .005;
   }
 }
 
