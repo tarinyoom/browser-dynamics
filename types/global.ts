@@ -1,7 +1,7 @@
 export {};
 
 declare global {
-  interface PersistentState {
+  interface Arena {
     positions: Float32Array;
     velocities: Float32Array;
   }

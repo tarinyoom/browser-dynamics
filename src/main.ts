@@ -4,7 +4,7 @@ import { randomize, step } from './simulation';
 import { createRenderer, createCamera, createScene, createParticles } from './render';
 import { isDev } from './env';
 
-function createPersistentState(): PersistentState {
+function createArena(): Arena {
   const positions = new Float32Array(NUM_PARTICLES * DIM);
   const velocities = new Float32Array(NUM_PARTICLES * DIM);
   return { positions, velocities };
@@ -19,14 +19,14 @@ function init() {
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
-  const state = createPersistentState();
+  const arena = createArena();
 
   renderer = createRenderer(container, isDev());
   camera = createCamera(container.clientWidth / container.clientHeight);
   scene = createScene();
 
-  particles = createParticles(state.positions);
-  randomize(state);
+  particles = createParticles(arena.positions);
+  randomize(arena);
   scene.add(particles);
 
   window.addEventListener('resize', () => {
@@ -35,7 +35,7 @@ function init() {
     renderer.setSize(container.clientWidth, container.clientHeight);
   });
 
-  makeAnimation(state)();
+  makeAnimation(arena)();
 }
 
 let accumulator = 0;
@@ -52,7 +52,7 @@ function drawFrame(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: TH
   }
 }
 
-function makeAnimation(state: PersistentState) {
+function makeAnimation(arena: Arena) {
   const animation = () => {
     requestAnimationFrame(animation);
 
@@ -62,12 +62,12 @@ function makeAnimation(state: PersistentState) {
     // If accumulator is too large, step physics up to MAX_STEPS forward
     let steps = 0;
     while (accumulator >= TIMESTEP && steps < MAX_TIMESTEPS_PER_FRAME) {
-      step(state);
+      step(arena);
       accumulator -= TIMESTEP;
       steps++;
     }
 
-    drawFrame(renderer, scene, camera, state.positions);
+    drawFrame(renderer, scene, camera, arena.positions);
   }
   return animation;
 }
