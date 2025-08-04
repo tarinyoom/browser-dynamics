@@ -9,27 +9,9 @@ function createArena(): Arena {
   return { positions, velocities };
 }
 
-function init() {
-  const container = document.getElementById('app');
-  if (!container) throw new Error("Missing #app container");
-
-  const view = createView(container, isDev());
-  const arena = createArena();
-
-  randomize(arena);
-
-  window.addEventListener('resize', () => {
-    view.camera.aspect = container.clientWidth / container.clientHeight;
-    view.camera.updateProjectionMatrix();
-    view.renderer.setSize(container.clientWidth, container.clientHeight);
-  });
-
-  makeAnimation(view, arena)();
-}
-
-let accumulator = 0;
-
 function makeAnimation(view: View, arena: Arena) {
+  let accumulator = 0;
+
   const animation = () => {
     requestAnimationFrame(animation);
 
@@ -47,6 +29,24 @@ function makeAnimation(view: View, arena: Arena) {
     drawFrame(view, arena.positions);
   }
   return animation;
+}
+
+function init() {
+  const container = document.getElementById('app');
+  if (!container) throw new Error("Missing #app container");
+
+  const view = createView(container, isDev());
+  const arena = createArena();
+
+  randomize(arena);
+
+  window.addEventListener('resize', () => {
+    view.camera.aspect = container.clientWidth / container.clientHeight;
+    view.camera.updateProjectionMatrix();
+    view.renderer.setSize(container.clientWidth, container.clientHeight);
+  });
+
+  makeAnimation(view, arena)();
 }
 
 init();
