@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { globals } from './constants';
 import { randomize, step } from './simulation'; 
-import { createView } from './render';
+import { createView, drawFrame } from './render';
 import { isDev } from './env';
 
 function createArena(): Arena {
@@ -30,17 +30,6 @@ function init() {
 
 let accumulator = 0;
 const clock = new THREE.Clock();
-
-function drawFrame(view: View, positions: Float32Array) {
-  const geometry = view.particles.geometry as THREE.BufferGeometry;
-  const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
-  posAttr.copyArray(positions);
-  posAttr.needsUpdate = true;
-  view.renderer.render(view.scene, view.camera);
-  if (isDev()) {
-    console.log(`Rendered frame with ${positions.length / 3} particles`);
-  }
-}
 
 function makeAnimation(view: View, arena: Arena) {
   const animation = () => {

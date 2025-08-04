@@ -81,3 +81,12 @@ export function createView(container: HTMLElement, dev: boolean): View {
 
   return { renderer, camera, scene, particles };
 }
+
+export function drawFrame(view: View, positions: Float32Array) {
+  const geometry = view.particles.geometry as THREE.BufferGeometry;
+  const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
+  posAttr.copyArray(positions);
+  posAttr.needsUpdate = true;
+  view.renderer.render(view.scene, view.camera);
+}
+
