@@ -1,3 +1,5 @@
+import { WebGLRenderer, PerspectiveCamera, Scene, Points } from 'three';
+
 export {};
 
 declare global {
@@ -12,6 +14,13 @@ declare global {
     maxTimestepsPerFrame: number;
     numParticles: number;
     dim: number;
+  }
+
+  interface View {
+    renderer: WebGLRenderer;
+    camera: PerspectiveCamera;
+    scene: Scene;
+    particles: Points;
   }
 
 }

@@ -10,49 +10,51 @@ function createArena(): Arena {
   return { positions, velocities };
 }
 
-let renderer: THREE.WebGLRenderer;
-let camera: THREE.PerspectiveCamera;
-let scene: THREE.Scene;
-let particles: THREE.Points;
+function createView(container: HTMLElement): View {
+  const renderer = createRenderer(container, isDev());
+  const camera = createCamera(container.clientWidth / container.clientHeight);
+  const scene = createScene();
+  const arena = createArena();
+  const particles = createParticles(arena.positions);
+
+  scene.add(particles);
+
+  return { renderer, camera, scene, particles };
+}
 
 function init() {
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
+  const view = createView(container);
   const arena = createArena();
 
-  renderer = createRenderer(container, isDev());
-  camera = createCamera(container.clientWidth / container.clientHeight);
-  scene = createScene();
-
-  particles = createParticles(arena.positions);
   randomize(arena);
-  scene.add(particles);
 
   window.addEventListener('resize', () => {
-    camera.aspect = container.clientWidth / container.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    view.camera.aspect = container.clientWidth / container.clientHeight;
+    view.camera.updateProjectionMatrix();
+    view.renderer.setSize(container.clientWidth, container.clientHeight);
   });
 
-  makeAnimation(arena)();
+  makeAnimation(view, arena)();
 }
 
 let accumulator = 0;
 const clock = new THREE.Clock();
 
-function drawFrame(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera, positions: Float32Array) {
-  const geometry = particles.geometry as THREE.BufferGeometry;
+function drawFrame(view: View, positions: Float32Array) {
+  const geometry = view.particles.geometry as THREE.BufferGeometry;
   const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
   posAttr.copyArray(positions);
   posAttr.needsUpdate = true;
-  renderer.render(scene, camera);
+  view.renderer.render(view.scene, view.camera);
   if (isDev()) {
     console.log(`Rendered frame with ${positions.length / 3} particles`);
   }
 }
 
-function makeAnimation(arena: Arena) {
+function makeAnimation(view: View, arena: Arena) {
   const animation = () => {
     requestAnimationFrame(animation);
 
@@ -67,7 +69,7 @@ function makeAnimation(arena: Arena) {
       steps++;
     }
 
-    drawFrame(renderer, scene, camera, arena.positions);
+    drawFrame(view, arena.positions);
   }
   return animation;
 }
