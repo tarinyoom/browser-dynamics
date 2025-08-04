@@ -26,7 +26,7 @@ function makeAnimation(view: View, arena: Arena) {
       steps++;
     }
 
-    drawFrame(view, arena.positions);
+    drawFrame(view, arena.positions, arena.densities);
   }
   return animation;
 }

@@ -58,13 +58,15 @@ function createScene(): THREE.Scene {
 
 function createParticles(count: number): THREE.Points {
   const positions = new Float32Array(count * globals.dim); 
+  const colors = new Float32Array(count * 3);
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
   const material = new THREE.PointsMaterial({
     size: 0.05,
-    color: 0x88ccff,
+    vertexColors: true,
     sizeAttenuation: true,
   });
 
@@ -83,11 +85,30 @@ export function createView(container: HTMLElement, dev: boolean): View {
   return { renderer, camera, scene, particles, clock };
 }
 
-export function drawFrame(view: View, positions: Float32Array) {
+export function drawFrame(view: View, positions: Float32Array, densities: Float32Array): void {
   const geometry = view.particles.geometry as THREE.BufferGeometry;
+
   const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
   posAttr.copyArray(positions);
   posAttr.needsUpdate = true;
+
+  const colorAttr = geometry.getAttribute('color') as THREE.BufferAttribute;
+  const colors = colorAttr.array as Float32Array;
+  
+  for (let i = 0; i < densities.length; i++) {
+    const norm = densities[i];
+
+    const r = norm;
+    const g = norm;
+    const b = 1.0;
+
+    colors[3 * i]     = r;
+    colors[3 * i + 1] = g;
+    colors[3 * i + 2] = b;
+  }
+
+  colorAttr.needsUpdate = true;
+
   view.renderer.render(view.scene, view.camera);
 }
 
