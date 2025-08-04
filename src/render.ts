@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { globals } from './constants';
 
 function recordAndSave(canvas: HTMLCanvasElement, fps: number, duration: number): void {
   const stream = canvas.captureStream(fps);
@@ -22,10 +23,7 @@ function recordAndSave(canvas: HTMLCanvasElement, fps: number, duration: number)
   setTimeout(() => recorder.stop(), duration);
 }
 
-/**
- * Sets up the WebGLRenderer and appends it to the container.
- */
-export function createRenderer(container: HTMLElement, dev: boolean): THREE.WebGLRenderer {
+function createRenderer(container: HTMLElement, dev: boolean): THREE.WebGLRenderer {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -39,10 +37,7 @@ export function createRenderer(container: HTMLElement, dev: boolean): THREE.WebG
   return renderer;
 }
 
-/**
- * Creates a perspective camera with standard settings.
- */
-export function createCamera(aspectRatio: number): THREE.PerspectiveCamera {
+function createCamera(aspectRatio: number): THREE.PerspectiveCamera {
   const fov = 45;
   const near = 0.1;
   const far = 100;
@@ -51,10 +46,7 @@ export function createCamera(aspectRatio: number): THREE.PerspectiveCamera {
   return camera;
 }
 
-/**
- * Creates a basic scene with ambient light and background.
- */
-export function createScene(): THREE.Scene {
+function createScene(): THREE.Scene {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
 
@@ -64,16 +56,11 @@ export function createScene(): THREE.Scene {
   return scene;
 }
 
-/**
- * Creates a THREE.Points object from a flat Float32Array of XYZ positions.
- * Makes a shallow copy of positions to isolate GPU state from CPU simulation.
- */
-export function createParticles(positions: Float32Array): THREE.Points {
+function createParticles(count: number): THREE.Points {
+  const positions = new Float32Array(count * 3); // initially all zeros
+
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute(
-    'position',
-    new THREE.BufferAttribute(positions.slice(), 3) // decouple GPU buffer
-  );
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
   const material = new THREE.PointsMaterial({
     size: 0.05,
@@ -84,3 +71,13 @@ export function createParticles(positions: Float32Array): THREE.Points {
   return new THREE.Points(geometry, material);
 }
 
+export function createView(container: HTMLElement, dev: boolean): View {
+  const renderer = createRenderer(container, dev);
+  const camera = createCamera(container.clientWidth / container.clientHeight);
+  const scene = createScene();
+  const particles = createParticles(globals.numParticles);
+
+  scene.add(particles);
+
+  return { renderer, camera, scene, particles };
+}

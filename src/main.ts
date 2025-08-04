@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { globals } from './constants';
 import { randomize, step } from './simulation'; 
-import { createRenderer, createCamera, createScene, createParticles } from './render';
+import { createView } from './render';
 import { isDev } from './env';
 
 function createArena(): Arena {
@@ -10,23 +10,11 @@ function createArena(): Arena {
   return { positions, velocities };
 }
 
-function createView(container: HTMLElement): View {
-  const renderer = createRenderer(container, isDev());
-  const camera = createCamera(container.clientWidth / container.clientHeight);
-  const scene = createScene();
-  const arena = createArena();
-  const particles = createParticles(arena.positions);
-
-  scene.add(particles);
-
-  return { renderer, camera, scene, particles };
-}
-
 function init() {
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
-  const view = createView(container);
+  const view = createView(container, isDev());
   const arena = createArena();
 
   randomize(arena);
