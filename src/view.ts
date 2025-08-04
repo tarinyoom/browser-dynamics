@@ -96,7 +96,7 @@ export function drawFrame(view: View, positions: Float32Array, densities: Float3
   const colors = colorAttr.array as Float32Array;
   
   for (let i = 0; i < densities.length; i++) {
-    const norm = densities[i];
+    const norm = densities[i] * 0.8 + 0.2;
 
     const r = norm;
     const g = norm;

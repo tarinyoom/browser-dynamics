@@ -21,7 +21,15 @@ export function randomize(arena: Arena) {
   }
 }
 
+function resetDensities(arena: Arena) {
+  for (let i = 0; i < globals.numParticles; i++) {
+    arena.densities[i] = 0;
+  }
+}
+
 export function step(arena: Arena) {
+
+  resetDensities(arena);
 
   for (let i = 0; i < globals.numParticles; i++) {
     arena.velocities[i * 3 + 1] += GRAVITY * globals.timestep;
