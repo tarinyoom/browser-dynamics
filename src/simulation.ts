@@ -48,12 +48,17 @@ function kernel(r: number): number {
 function accumulateDensities(arena: Arena) {
 
   for (let i = 0; i < globals.numParticles; i++) {
-    const dx = arena.positions[i * 3]     - arena.positions[0];
-    const dy = arena.positions[i * 3 + 1] - arena.positions[1];
-    const dz = arena.positions[i * 3 + 2] - arena.positions[2];
+    for (let j = i + 1; j < globals.numParticles; j++) {
+      const dx = arena.positions[i * 3]     - arena.positions[j * 3];
+      const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
+      const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
 
-    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    arena.densities[i] += kernel(d) * 0.2;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const density = kernel(d) * 3.0 / globals.numParticles;
+
+      arena.densities[i] += density;
+      arena.densities[j] += density;
+    }
   }
 }
 
