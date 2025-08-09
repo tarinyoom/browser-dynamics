@@ -100,19 +100,19 @@ export function drawFrame(view: View, positions: Float32Array, densities: Float3
   for (let i = 0; i < densities.length; i++) {
     const t = densities[i];
 
-    // [0, 1] -> [hot, cold] color mapping
+    // [0, 1] -> [cold, hot] color mapping
     if (t < 0.5) {
-      const localT = t / 0.5;
-      r = 0;
-      g = Math.round(1 * localT);
-      b = 1;
+      r = 0.0;
+      g = t;
+      b = 1 - 2 * t;
     } else {
-      const localT = (t - 0.5) / 0.5;
-      r = 1;
-      g = Math.round(1 * (1 - localT));
-      b = 0;
+      r = 2 * (t - 0.5);
+      g = 1.0 - t;
+      b = 0.0;
     }
 
+    g = 0.3 + 0.7 * g; // Boost green for better visibility
+ 
     colors[3 * i]     = r;
     colors[3 * i + 1] = g;
     colors[3 * i + 2] = b;
