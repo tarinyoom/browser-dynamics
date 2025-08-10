@@ -54,8 +54,6 @@ function kernel(r: number): number {
 
 function accumulateDensities(arena: Arena) {
 
-  populateGrid(arena.positions, arena.grid, arena.cellContents);
-  
   for (let i = 0; i < globals.numParticles; i++) {
     const x = arena.positions[i * 3];
     const y = arena.positions[i * 3 + 1];
@@ -97,6 +95,7 @@ function accumulateDensities(arena: Arena) {
 }
 
 export function step(arena: Arena) {
+  populateGrid(arena.positions, arena.grid, arena.cellContents);
 
   resetDensities(arena);
   accumulateDensities(arena);
