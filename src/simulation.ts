@@ -53,6 +53,18 @@ function kernel(r: number): number {
 
 }
 
+function addDensity(arena: Arena, i: number, j: number): void {
+    const dx = arena.positions[i * 3] - arena.positions[j * 3];
+    const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
+    const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
+
+    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const density = kernel(d) * 3.0 / globals.numParticles;
+
+    arena.densities[i] += density;
+    arena.densities[j] += density;
+}
+
 function accumulateDensities(arena: Arena) {
 
   for (let i = 0; i < globals.numParticles; i++) {
@@ -63,20 +75,9 @@ function accumulateDensities(arena: Arena) {
         for (let dz = -1; dz <= 1; dz++) {
           const neighborCell = cell + dx + dy * arena.grid.count[0] + dz * arena.grid.count[0] * arena.grid.count[1];          
           if (neighborCell < 0 || neighborCell >= arena.cellContents.length) continue;
-
           for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {
             const j = arena.cellContents[neighborCell][n];
-            if (i < j) { // Avoid double counting
-              const dx = arena.positions[i * 3]     - arena.positions[j * 3];
-              const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
-              const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
-
-              const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-              const density = kernel(d) * 3.0 / globals.numParticles;
-
-              arena.densities[i] += density;
-              arena.densities[j] += density;
-            }
+            if (i < j) addDensity(arena, i, j);
           }
         }
       }
