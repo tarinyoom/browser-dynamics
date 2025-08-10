@@ -17,6 +17,12 @@ declare global {
     dim: number;
   }
 
+  interface Grid {
+    count: number[];
+    cellLength: number;
+    offset: number[];
+  }
+
   interface View {
     renderer: WebGLRenderer;
     camera: PerspectiveCamera;
