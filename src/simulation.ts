@@ -9,6 +9,7 @@ export function initializeArena(): Arena {
   const grid = computeGrid(extents, globals.smoothingRadius);
   const nCells = grid.count.reduce((a, b) => a * b, 1);
   const cellContents: number[][] = Array.from({ length: nCells }, () => []);
+  const pointToCell = new Array(globals.numParticles).fill(0);
 
   for (let i = 0; i < globals.numParticles; i++) {
 
@@ -25,7 +26,7 @@ export function initializeArena(): Arena {
     }
   }
 
-  return { positions, velocities, densities, grid, cellContents };
+  return { positions, velocities, densities, grid, cellContents, pointToCell };
 }
 
 function resetDensities(arena: Arena) {
@@ -55,37 +56,26 @@ function kernel(r: number): number {
 function accumulateDensities(arena: Arena) {
 
   for (let i = 0; i < globals.numParticles; i++) {
-    const x = arena.positions[i * 3];
-    const y = arena.positions[i * 3 + 1];
-    const z = arena.positions[i * 3 + 2];
-
-    const cellX = Math.floor((x - arena.grid.offset[0]) / globals.smoothingRadius);
-    const cellY = Math.floor((y - arena.grid.offset[1]) / globals.smoothingRadius);
-    const cellZ = Math.floor((z - arena.grid.offset[2]) / globals.smoothingRadius);
+    const cell = arena.pointToCell[i];
 
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
         for (let dz = -1; dz <= 1; dz++) {
-          const nx = cellX + dx;
-          const ny = cellY + dy;
-          const nz = cellZ + dz;
+          const neighborCell = cell + dx + dy * arena.grid.count[0] + dz * arena.grid.count[0] * arena.grid.count[1];          
+          if (neighborCell < 0 || neighborCell >= arena.cellContents.length) continue;
 
-          if (nx >= 0 && nx < arena.grid.count[0] &&
-              ny >= 0 && ny < arena.grid.count[1] &&
-              nz >= 0 && nz < arena.grid.count[2]) {
-            const neighborIndex = nx + ny * arena.grid.count[0] + nz * arena.grid.count[0] * arena.grid.count[1];
-            for (const n of arena.cellContents[neighborIndex]) {
-              if (i < n) { // Avoid double counting
-                const dx = arena.positions[i * 3]     - arena.positions[n * 3];
-                const dy = arena.positions[i * 3 + 1] - arena.positions[n * 3 + 1];
-                const dz = arena.positions[i * 3 + 2] - arena.positions[n * 3 + 2];
+          for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {
+            const j = arena.cellContents[neighborCell][n];
+            if (i < j) { // Avoid double counting
+              const dx = arena.positions[i * 3]     - arena.positions[j * 3];
+              const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
+              const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
 
-                const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                const density = kernel(d) * 3.0 / globals.numParticles;
+              const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+              const density = kernel(d) * 3.0 / globals.numParticles;
 
-                arena.densities[i] += density;
-                arena.densities[n] += density;
-              }
+              arena.densities[i] += density;
+              arena.densities[j] += density;
             }
           }
         }
@@ -95,7 +85,7 @@ function accumulateDensities(arena: Arena) {
 }
 
 export function step(arena: Arena) {
-  populateGrid(arena.positions, arena.grid, arena.cellContents);
+  populateGrid(arena.positions, arena.grid, arena.cellContents, arena.pointToCell);
 
   resetDensities(arena);
   accumulateDensities(arena);

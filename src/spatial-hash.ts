@@ -36,7 +36,7 @@ function hash(x: number, y: number, z: number, grid: Grid): number {
   return cellX + cellY * count[0] + cellZ * count[0] * count[1];
 }
 
-function populateGrid(positions: Float32Array, grid: Grid, contents: number[][]): void {
+function populateGrid(positions: Float32Array, grid: Grid, contents: number[][], gridMap: number[]): void {
   for (let i = 0; i < contents.length; i++) {
     contents[i].length = 0;
   }
@@ -48,6 +48,7 @@ function populateGrid(positions: Float32Array, grid: Grid, contents: number[][])
 
     const cellIndex = hash(x, y, z, grid);
     contents[cellIndex].push(i);
+    gridMap[i] = cellIndex;
   }
 }
 

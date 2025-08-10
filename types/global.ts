@@ -15,6 +15,7 @@ declare global {
     densities: Float32Array;
     grid: Grid;
     cellContents: number[][]; // index-based lists
+    pointToCell: number[]; // maps particle index to cell index
   }
 
   interface CalculationParameters {
