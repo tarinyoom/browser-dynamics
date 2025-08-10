@@ -2,12 +2,16 @@ import { globals } from './constants';
 import { randomize, step } from './simulation'; 
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
+import { computeGrid } from './spatial-hash';
 
 function createArena(): Arena {
   const positions = new Float32Array(globals.numParticles * 3);
   const velocities = new Float32Array(globals.numParticles * 3);
   const densities = new Float32Array(globals.numParticles);
-  return { positions, velocities, densities };
+  const extents = [[globals.boxMin, globals.boxMax], [globals.boxMin, globals.boxMax], [0.0, 0.0]];
+  const grid = computeGrid(extents, globals.smoothingRadius);
+
+  return { positions, velocities, densities, grid };
 }
 
 function makeAnimation(view: View, arena: Arena) {

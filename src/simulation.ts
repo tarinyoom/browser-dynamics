@@ -1,9 +1,5 @@
 import { globals } from './constants';
-import { computeGrid, populateGrid, hash } from './spatial-hash';
-
-const BOX_MIN = -1.6;
-const BOX_MAX = 1.6;
-const GRAVITY = -1.0;
+import { computeGrid, populateGrid } from './spatial-hash';
 
 export function randomize(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
@@ -47,11 +43,6 @@ function kernel(r: number): number {
 }
 
 function accumulateDensities(arena: Arena) {
-
-  arena.grid = computeGrid(
-    [ [BOX_MIN, BOX_MAX], [BOX_MIN, BOX_MAX], [BOX_MIN, BOX_MAX] ],
-    globals.smoothingRadius
-  );
 
   const neighborMap = populateGrid(arena.positions, arena.grid);
   
@@ -101,7 +92,7 @@ export function step(arena: Arena) {
   accumulateDensities(arena);
 
   for (let i = 0; i < globals.numParticles; i++) {
-    arena.velocities[i * 3 + 1] += GRAVITY * globals.timestep;
+    arena.velocities[i * 3 + 1] += globals.gravity * globals.timestep;
   }
 
   for (let i = 0; i < globals.numParticles; i++) {
@@ -114,11 +105,11 @@ export function step(arena: Arena) {
     const vel = arena.velocities.subarray(i * 3, (i + 1) * 3);
 
     for (let j = 0; j < globals.dim; j++) {
-      if (pos[j] < BOX_MIN) {
-        pos[j] = BOX_MIN;
+      if (pos[j] < globals.boxMin) {
+        pos[j] = globals.boxMin;
         vel[j] *= -1;
-      } else if (pos[j] > BOX_MAX) {
-        pos[j] = BOX_MAX;
+      } else if (pos[j] > globals.boxMax) {
+        pos[j] = globals.boxMax;
         vel[j] *= -1;
       }
     }

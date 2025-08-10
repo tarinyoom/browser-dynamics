@@ -4,4 +4,7 @@ export const globals: CalculationParameters = {
   numParticles: 1000,
   smoothingRadius: 0.2,
   dim: 2,
+  boxMin: -1.6,
+  boxMax: 1.6,
+  gravity: -1.0,
 };

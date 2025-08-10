@@ -22,6 +22,9 @@ declare global {
     numParticles: number;
     smoothingRadius: number;
     dim: number;
+    boxMin: number;
+    boxMax: number;
+    gravity: number;
   }
 
   interface View {
