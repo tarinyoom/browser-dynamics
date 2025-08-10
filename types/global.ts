@@ -4,10 +4,16 @@ export {};
 
 declare global {
 
+  interface Grid {
+    count: number[];
+    offset: number[];
+  }
+
   interface Arena {
     positions: Float32Array;
     velocities: Float32Array;
     densities: Float32Array;
+    grid: Grid;
   }
 
   interface CalculationParameters {
@@ -16,12 +22,6 @@ declare global {
     numParticles: number;
     smoothingRadius: number;
     dim: number;
-  }
-
-  interface Grid {
-    count: number[];
-    cellLength: number;
-    offset: number[];
   }
 
   interface View {

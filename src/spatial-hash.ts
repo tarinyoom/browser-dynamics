@@ -24,14 +24,14 @@ function computeGrid(extents: number[][], cellLength: number): Grid {
     offset[i] = center - gridSize / 2;
   }
   
-  return { count, cellLength, offset };
+  return { count, offset };
 }
 
 function hash(x: number, y: number, z: number, grid: Grid): number {
-  const { count, cellLength, offset } = grid;
-  const cellX = Math.floor((x - offset[0]) / cellLength);
-  const cellY = Math.floor((y - offset[1]) / cellLength);
-  const cellZ = Math.floor((z - offset[2]) / cellLength);
+  const { count, offset } = grid;
+  const cellX = Math.floor((x - offset[0]) / globals.smoothingRadius);
+  const cellY = Math.floor((y - offset[1]) / globals.smoothingRadius);
+  const cellZ = Math.floor((z - offset[2]) / globals.smoothingRadius);
 
   return cellX + cellY * count[0] + cellZ * count[0] * count[1];
 }

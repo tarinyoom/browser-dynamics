@@ -48,21 +48,21 @@ function kernel(r: number): number {
 
 function accumulateDensities(arena: Arena) {
 
-  const grid = computeGrid(
+  arena.grid = computeGrid(
     [ [BOX_MIN, BOX_MAX], [BOX_MIN, BOX_MAX], [BOX_MIN, BOX_MAX] ],
     globals.smoothingRadius
   );
 
-  const neighborMap = populateGrid(arena.positions, grid);
+  const neighborMap = populateGrid(arena.positions, arena.grid);
   
   for (let i = 0; i < globals.numParticles; i++) {
     const x = arena.positions[i * 3];
     const y = arena.positions[i * 3 + 1];
     const z = arena.positions[i * 3 + 2];
 
-    const cellX = Math.floor((x - grid.offset[0]) / grid.cellLength);
-    const cellY = Math.floor((y - grid.offset[1]) / grid.cellLength);
-    const cellZ = Math.floor((z - grid.offset[2]) / grid.cellLength);
+    const cellX = Math.floor((x - arena.grid.offset[0]) / globals.smoothingRadius);
+    const cellY = Math.floor((y - arena.grid.offset[1]) / globals.smoothingRadius);
+    const cellZ = Math.floor((z - arena.grid.offset[2]) / globals.smoothingRadius);
 
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
@@ -71,10 +71,10 @@ function accumulateDensities(arena: Arena) {
           const ny = cellY + dy;
           const nz = cellZ + dz;
 
-          if (nx >= 0 && nx < grid.count[0] &&
-              ny >= 0 && ny < grid.count[1] &&
-              nz >= 0 && nz < grid.count[2]) {
-            const neighborIndex = nx + ny * grid.count[0] + nz * grid.count[0] * grid.count[1];
+          if (nx >= 0 && nx < arena.grid.count[0] &&
+              ny >= 0 && ny < arena.grid.count[1] &&
+              nz >= 0 && nz < arena.grid.count[2]) {
+            const neighborIndex = nx + ny * arena.grid.count[0] + nz * arena.grid.count[0] * arena.grid.count[1];
             for (const n of neighborMap[neighborIndex]) {
               if (i < n) { // Avoid double counting
                 const dx = arena.positions[i * 3]     - arena.positions[n * 3];
