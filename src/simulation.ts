@@ -29,7 +29,7 @@ function resetDensities(arena: Arena) {
 }
 
 function kernel(r: number): number {
-  const h = 0.2;
+  const h = globals.smoothingRadius;
 
   const norm = 10 / (7 * Math.PI * h * h);
   const invH = 1.0 / h;
@@ -60,19 +60,23 @@ function accumulateDensities(arena: Arena) {
     const y = arena.positions[i * 3 + 1];
     const z = arena.positions[i * 3 + 2];
 
+    const cellX = Math.floor((x - grid.offset[0]) / grid.cellLength);
+    const cellY = Math.floor((y - grid.offset[1]) / grid.cellLength);
+    const cellZ = Math.floor((z - grid.offset[2]) / grid.cellLength);
+
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
         for (let dz = -1; dz <= 1; dz++) {
-          const nx = x + dx;
-          const ny = y + dy;
-          const nz = z + dz;
+          const nx = cellX + dx;
+          const ny = cellY + dy;
+          const nz = cellZ + dz;
 
-          if (nx <= 0 && nx < grid.count[0] &&
-              ny <= 0 && ny < grid.count[1] &&
-              nz <= 0 && nz < grid.count[2]) {
-            const neighborIndex = hash(nx, ny, nz, grid);
+          if (nx >= 0 && nx < grid.count[0] &&
+              ny >= 0 && ny < grid.count[1] &&
+              nz >= 0 && nz < grid.count[2]) {
+            const neighborIndex = nx + ny * grid.count[0] + nz * grid.count[0] * grid.count[1];
             for (const n of neighborMap[neighborIndex]) {
-              if (n > i) {
+              if (i < n) { // Avoid double counting
                 const dx = arena.positions[i * 3]     - arena.positions[n * 3];
                 const dy = arena.positions[i * 3 + 1] - arena.positions[n * 3 + 1];
                 const dz = arena.positions[i * 3 + 2] - arena.positions[n * 3 + 2];
