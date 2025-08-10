@@ -1,21 +1,31 @@
 import { globals } from './constants';
 import { computeGrid, populateGrid } from './spatial-hash';
 
-export function randomize(arena: Arena) {
+export function initializeArena(): Arena {
+  const positions = new Float32Array(globals.numParticles * 3);
+  const velocities = new Float32Array(globals.numParticles * 3);
+  const densities = new Float32Array(globals.numParticles);
+  const extents = [[globals.boxMin, globals.boxMax], [globals.boxMin, globals.boxMax], [0.0, 0.0]];
+  const grid = computeGrid(extents, globals.smoothingRadius);
+  const nCells = grid.count.reduce((a, b) => a * b, 1);
+  const cellContents: number[][] = Array.from({ length: nCells }, () => []);
+
   for (let i = 0; i < globals.numParticles; i++) {
 
-    arena.densities[i] = Math.random();
+    densities[i] = Math.random();
 
     for (let j = 0; j < globals.dim; j++) {
-      arena.positions[i * 3 + j] = (Math.random() - 0.5) * 2;
-      arena.velocities[i * 3 + j] = (Math.random() - 0.5) * 1;
+      positions[i * 3 + j] = (Math.random() - 0.5) * 2;
+      velocities[i * 3 + j] = (Math.random() - 0.5) * 1;
     }
 
     for (let j = globals.dim; j < 3; j++) {
-      arena.positions[i * 3 + j] = 0;
-      arena.velocities[i * 3 + j] = 0;
+      positions[i * 3 + j] = 0;
+      velocities[i * 3 + j] = 0;
     }
   }
+
+  return { positions, velocities, densities, grid, cellContents };
 }
 
 function resetDensities(arena: Arena) {
