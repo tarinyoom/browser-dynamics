@@ -1,3 +1,4 @@
+import { globals } from "./constants";
 
 /**
  * Computes the grid structure for spatial hashing. The grid will cover the
@@ -26,4 +27,27 @@ function computeGrid(extents: number[][], cellLength: number): Grid {
   return { count, cellLength, offset };
 }
 
-export { computeGrid };
+function hash(x: number, y: number, z: number, grid: Grid): number {
+  const { count, cellLength, offset } = grid;
+  const cellX = Math.floor((x - offset[0]) / cellLength);
+  const cellY = Math.floor((y - offset[1]) / cellLength);
+  const cellZ = Math.floor((z - offset[2]) / cellLength);
+
+  return cellX + cellY * count[0] + cellZ * count[0] * count[1];
+}
+
+function populateGrid(positions: Float32Array, grid: Grid): number[][] {
+  const nCells = grid.count.reduce((a, b) => a * b, 1);
+  const neighbors: number[][] = Array.from({ length: nCells }, () => []);
+  for (let i = 0; i < globals.numParticles; i++) {
+    const x = positions[i * 3];
+    const y = positions[i * 3 + 1];
+    const z = positions[i * 3 + 2];
+
+    const cellIndex = hash(x, y, z, grid);
+    neighbors[cellIndex].push(i);
+  }
+  return neighbors;
+}
+
+export { computeGrid, populateGrid, hash };

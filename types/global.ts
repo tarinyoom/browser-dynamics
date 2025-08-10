@@ -14,6 +14,7 @@ declare global {
     timestep: number;
     maxTimestepsPerFrame: number;
     numParticles: number;
+    smoothingRadius: number;
     dim: number;
   }
 

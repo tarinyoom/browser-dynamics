@@ -1,4 +1,5 @@
 import { globals } from './constants';
+import { computeGrid, populateGrid, hash } from './spatial-hash';
 
 const BOX_MIN = -1.6;
 const BOX_MAX = 1.6;
@@ -47,17 +48,45 @@ function kernel(r: number): number {
 
 function accumulateDensities(arena: Arena) {
 
+  const grid = computeGrid(
+    [ [BOX_MIN, BOX_MAX], [BOX_MIN, BOX_MAX], [BOX_MIN, BOX_MAX] ],
+    globals.smoothingRadius
+  );
+
+  const neighborMap = populateGrid(arena.positions, grid);
+  
   for (let i = 0; i < globals.numParticles; i++) {
-    for (let j = i + 1; j < globals.numParticles; j++) {
-      const dx = arena.positions[i * 3]     - arena.positions[j * 3];
-      const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
-      const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
+    const x = arena.positions[i * 3];
+    const y = arena.positions[i * 3 + 1];
+    const z = arena.positions[i * 3 + 2];
 
-      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      const density = kernel(d) * 3.0 / globals.numParticles;
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dz = -1; dz <= 1; dz++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          const nz = z + dz;
 
-      arena.densities[i] += density;
-      arena.densities[j] += density;
+          if (nx <= 0 && nx < grid.count[0] &&
+              ny <= 0 && ny < grid.count[1] &&
+              nz <= 0 && nz < grid.count[2]) {
+            const neighborIndex = hash(nx, ny, nz, grid);
+            for (const n of neighborMap[neighborIndex]) {
+              if (n > i) {
+                const dx = arena.positions[i * 3]     - arena.positions[n * 3];
+                const dy = arena.positions[i * 3 + 1] - arena.positions[n * 3 + 1];
+                const dz = arena.positions[i * 3 + 2] - arena.positions[n * 3 + 2];
+
+                const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                const density = kernel(d) * 3.0 / globals.numParticles;
+
+                arena.densities[i] += density;
+                arena.densities[n] += density;
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
