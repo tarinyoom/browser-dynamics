@@ -10,8 +10,10 @@ function createArena(): Arena {
   const densities = new Float32Array(globals.numParticles);
   const extents = [[globals.boxMin, globals.boxMax], [globals.boxMin, globals.boxMax], [0.0, 0.0]];
   const grid = computeGrid(extents, globals.smoothingRadius);
+  const nCells = grid.count.reduce((a, b) => a * b, 1);
+  const cellContents: number[][] = Array.from({ length: nCells }, () => []);
 
-  return { positions, velocities, densities, grid };
+  return { positions, velocities, densities, grid, cellContents };
 }
 
 function makeAnimation(view: View, arena: Arena) {

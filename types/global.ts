@@ -14,6 +14,7 @@ declare global {
     velocities: Float32Array;
     densities: Float32Array;
     grid: Grid;
+    cellContents: number[][]; // index-based lists
   }
 
   interface CalculationParameters {

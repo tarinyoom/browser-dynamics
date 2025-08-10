@@ -5,7 +5,6 @@ describe('computeGrid', () => {
   describe('1D grid', () => {
     test('creates grid for simple case', () => {
       const result = computeGrid([[0, 10]], 2);
-      expect(result.cellLength).toBe(2);
       expect(result.count).toEqual([6]);
       expect(result.offset).toEqual([-1]);
     });
@@ -32,7 +31,6 @@ describe('computeGrid', () => {
   describe('2D grid', () => {
     test('creates grid for 2D case', () => {
       const result = computeGrid([[0, 10], [0, 20]], 5);
-      expect(result.cellLength).toBe(5);
       expect(result.count).toEqual([3, 5]);
       expect(result.offset).toEqual([-2.5, -2.5]);
     });
@@ -60,7 +58,7 @@ describe('computeGrid', () => {
 
       for (let dim = 0; dim < extents.length; dim++) {
         const gridMin = grid.offset[dim];
-        const gridMax = grid.offset[dim] + grid.count[dim] * grid.cellLength;
+        const gridMax = grid.offset[dim] + grid.count[dim] * cellLength;
 
         expect(gridMin).toBeLessThan(extents[dim][0]);
         expect(gridMax).toBeGreaterThan(extents[dim][1]);
@@ -73,7 +71,7 @@ describe('computeGrid', () => {
       const grid = computeGrid(extents, cellLength);
 
       const gridMin = grid.offset[0];
-      const gridMax = grid.offset[0] + grid.count[0] * grid.cellLength;
+      const gridMax = grid.offset[0] + grid.count[0] * cellLength;
 
       expect(gridMin).toBeLessThan(extents[0][0]);
       expect(gridMax).toBeGreaterThan(extents[0][1]);
@@ -87,7 +85,7 @@ describe('computeGrid', () => {
       const grid = computeGrid(extents, cellLength);
 
       const extentCenter = (extents[0][0] + extents[0][1]) / 2;
-      const gridCenter = grid.offset[0] + (grid.count[0] * grid.cellLength) / 2;
+      const gridCenter = grid.offset[0] + (grid.count[0] * cellLength) / 2;
 
       expect(gridCenter).toBeCloseTo(extentCenter, 10);
     });

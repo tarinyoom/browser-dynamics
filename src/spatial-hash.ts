@@ -36,18 +36,19 @@ function hash(x: number, y: number, z: number, grid: Grid): number {
   return cellX + cellY * count[0] + cellZ * count[0] * count[1];
 }
 
-function populateGrid(positions: Float32Array, grid: Grid): number[][] {
-  const nCells = grid.count.reduce((a, b) => a * b, 1);
-  const neighbors: number[][] = Array.from({ length: nCells }, () => []);
+function populateGrid(positions: Float32Array, grid: Grid, contents: number[][]): void {
+  for (let i = 0; i < contents.length; i++) {
+    contents[i].length = 0;
+  }
+
   for (let i = 0; i < globals.numParticles; i++) {
     const x = positions[i * 3];
     const y = positions[i * 3 + 1];
     const z = positions[i * 3 + 2];
 
     const cellIndex = hash(x, y, z, grid);
-    neighbors[cellIndex].push(i);
+    contents[cellIndex].push(i);
   }
-  return neighbors;
 }
 
 export { computeGrid, populateGrid, hash };

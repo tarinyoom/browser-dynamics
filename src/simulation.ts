@@ -44,7 +44,7 @@ function kernel(r: number): number {
 
 function accumulateDensities(arena: Arena) {
 
-  const neighborMap = populateGrid(arena.positions, arena.grid);
+  populateGrid(arena.positions, arena.grid, arena.cellContents);
   
   for (let i = 0; i < globals.numParticles; i++) {
     const x = arena.positions[i * 3];
@@ -66,7 +66,7 @@ function accumulateDensities(arena: Arena) {
               ny >= 0 && ny < arena.grid.count[1] &&
               nz >= 0 && nz < arena.grid.count[2]) {
             const neighborIndex = nx + ny * arena.grid.count[0] + nz * arena.grid.count[0] * arena.grid.count[1];
-            for (const n of neighborMap[neighborIndex]) {
+            for (const n of arena.cellContents[neighborIndex]) {
               if (i < n) { // Avoid double counting
                 const dx = arena.positions[i * 3]     - arena.positions[n * 3];
                 const dy = arena.positions[i * 3 + 1] - arena.positions[n * 3 + 1];
