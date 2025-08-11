@@ -1,5 +1,5 @@
 import { globals } from './constants';
-import { computeGrid, populateGrid, hash } from './spatial-hash';
+import { computeGrid, populateGrid } from './spatial-hash';
 
 export function initializeArena(): Arena {
   const positions = new Float32Array(globals.numParticles * 3);
@@ -12,6 +12,15 @@ export function initializeArena(): Arena {
   const pointToCell = new Array(globals.numParticles).fill(0);
   const invNumParticles = 1.0 / globals.numParticles;
   const invH = 1.0 / globals.smoothingRadius;
+
+  // Precompute neighbor offsets for neighboring cells
+  const neighborOffsets: number[] = [];
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+        const offset = dx + dy * grid.count[0];
+        neighborOffsets.push(offset);
+    }
+  }
 
   for (let i = 0; i < globals.numParticles; i++) {
 
@@ -35,7 +44,8 @@ export function initializeArena(): Arena {
            cellContents: cellContents,
            pointToCell: pointToCell,
            invNumParticles: invNumParticles,
-           invH: invH
+           invH: invH,
+           neighborOffsets: neighborOffsets
         };
 }
 
@@ -66,6 +76,8 @@ function addDensity(arena: Arena, i: number, j: number): void {
     const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
 
     const r2 = dx * dx + dy * dy + dz * dz;
+
+    // Early exit before having to compute square root
     if (r2 > globals.smoothingRadius * globals.smoothingRadius) return;
 
     const d = Math.sqrt(r2);
@@ -80,18 +92,18 @@ function accumulateDensities(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
     const cell = arena.pointToCell[i];
 
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dz = -1; dz <= 1; dz++) {
-          // We don't need to check if the neighbor cell is valid here if the grid is designed to always cover the extents
-          const neighborCell = cell + dx + dy * arena.grid.count[0] + dz * arena.grid.count[0] * arena.grid.count[1];
+    for (let j = 0; j < 9; j++) {
 
-          for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {
-            const j = arena.cellContents[neighborCell][n];
-            if (i < j) addDensity(arena, i, j);
-          }
-        }
+      // Neighbor cell index does not need to be checked for bounds because of grid padding
+      const neighborCell = cell + arena.neighborOffsets[j];
+
+      for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {
+        const j = arena.cellContents[neighborCell][n];
+
+        // Only accumulate density if i < j to avoid double counting
+        if (i < j) addDensity(arena, i, j);
       }
+
     }
   }
 }

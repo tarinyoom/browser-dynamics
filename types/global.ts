@@ -9,6 +9,7 @@ declare global {
     offset: number[];
   }
 
+  // Singleton-ish data structure to hold global simulation state
   interface Arena {
     positions: Float32Array;
     velocities: Float32Array;
@@ -18,6 +19,7 @@ declare global {
     pointToCell: number[]; // maps particle index to cell index
     invNumParticles: number;
     invH: number;
+    neighborOffsets: number[]; // in grid space
   }
 
   interface CalculationParameters {
