@@ -9,7 +9,7 @@ export function initializeArena(): Arena {
   const grid = computeGrid(extents, globals.smoothingRadius);
   const nCells = grid.count.reduce((a, b) => a * b, 1);
   const cellContents: number[][] = Array.from({ length: nCells }, () => []);
-  const pointToCell = Array.from({ length: globals.numParticles }, () => [0, 0, 0]);
+  const pointToCell = new Array(globals.numParticles).fill(0);
   const invNumParticles = 1.0 / globals.numParticles;
   const invH = 1.0 / globals.smoothingRadius;
 
@@ -83,11 +83,8 @@ function accumulateDensities(arena: Arena) {
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
         for (let dz = -1; dz <= 1; dz++) {
-          const nx = cell[0] + dx;
-          const ny = cell[1] + dy;
-          const nz = cell[2] + dz;
-
-          const neighborCell = hash(nx, ny, nz, arena.grid);
+          // We don't need to check if the neighbor cell is valid here if the grid is designed to always cover the extents
+          const neighborCell = cell + dx + dy * arena.grid.count[0] + dz * arena.grid.count[0] * arena.grid.count[1];
 
           for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {
             const j = arena.cellContents[neighborCell][n];
