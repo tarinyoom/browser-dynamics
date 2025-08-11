@@ -17,8 +17,8 @@ function computeGrid(extents: number[][], cellLength: number): Grid {
   for (let i = 0; i < dimensions; i++) {
     const [min, max] = extents[i];
 
-    // Add 1 to ensure grid always exceeds extents, handling floating-point edge cases
-    count[i] = Math.ceil((max - min) / cellLength) + 1;
+    // Add 3 cells to guarantee 1-cell-width buffer around extents
+    count[i] = Math.ceil((max - min) / cellLength) + 3;
     const gridSize = count[i] * cellLength;
     const center = (min + max) / 2;
     offset[i] = center - gridSize / 2;

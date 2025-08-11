@@ -87,10 +87,6 @@ function accumulateDensities(arena: Arena) {
           const ny = cell[1] + dy;
           const nz = cell[2] + dz;
 
-          if (nx < 0 || nx >= arena.grid.count[0] ||
-              ny < 0 || ny >= arena.grid.count[1] ||
-              nz < 0 || nz >= arena.grid.count[2]) continue;
-
           const neighborCell = hash(nx, ny, nz, arena.grid);
 
           for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {

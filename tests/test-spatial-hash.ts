@@ -5,48 +5,48 @@ describe('computeGrid', () => {
   describe('1D grid', () => {
     test('creates grid for simple case', () => {
       const result = computeGrid([[0, 10]], 2);
-      expect(result.count).toEqual([6]);
-      expect(result.offset).toEqual([-1]);
+      expect(result.count).toEqual([8]);
+      expect(result.offset).toEqual([-3]);
     });
 
     test('handles exact cell divisions', () => {
       const result = computeGrid([[0, 4]], 1);
-      expect(result.count).toEqual([5]);
-      expect(result.offset).toEqual([-0.5]);
+      expect(result.count).toEqual([7]);
+      expect(result.offset).toEqual([-1.5]);
     });
 
     test('handles negative extents', () => {
       const result = computeGrid([[-5, 5]], 2);
-      expect(result.count).toEqual([6]);
-      expect(result.offset).toEqual([-6]);
+      expect(result.count).toEqual([8]);
+      expect(result.offset).toEqual([-8]);
     });
 
     test('handles fractional cell length', () => {
       const result = computeGrid([[0, 3]], 0.5);
-      expect(result.count).toEqual([7]);
-      expect(result.offset).toEqual([-0.25]);
+      expect(result.count).toEqual([9]);
+      expect(result.offset).toEqual([-0.75]);
     });
   });
 
   describe('2D grid', () => {
     test('creates grid for 2D case', () => {
       const result = computeGrid([[0, 10], [0, 20]], 5);
-      expect(result.count).toEqual([3, 5]);
-      expect(result.offset).toEqual([-2.5, -2.5]);
+      expect(result.count).toEqual([5, 7]);
+      expect(result.offset).toEqual([-7.5, -7.5]);
     });
 
     test('handles different ranges per dimension', () => {
       const result = computeGrid([[-1, 1], [0, 3]], 1);
-      expect(result.count).toEqual([3, 4]);
-      expect(result.offset).toEqual([-1.5, -0.5]);
+      expect(result.count).toEqual([5, 6]);
+      expect(result.offset).toEqual([-2.5, -1.5]);
     });
   });
 
   describe('3D grid', () => {
     test('creates grid for 3D case', () => {
       const result = computeGrid([[0, 2], [0, 4], [0, 6]], 1);
-      expect(result.count).toEqual([3, 5, 7]);
-      expect(result.offset).toEqual([-0.5, -0.5, -0.5]);
+      expect(result.count).toEqual([5, 7, 9]);
+      expect(result.offset).toEqual([-1.5, -1.5, -1.5]);
     });
   });
 
