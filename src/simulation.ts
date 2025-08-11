@@ -10,6 +10,8 @@ export function initializeArena(): Arena {
   const nCells = grid.count.reduce((a, b) => a * b, 1);
   const cellContents: number[][] = Array.from({ length: nCells }, () => []);
   const pointToCell = new Array(globals.numParticles).fill(0);
+  const invNumParticles = 1.0 / globals.numParticles;
+  const invH = 1.0 / globals.smoothingRadius;
 
   for (let i = 0; i < globals.numParticles; i++) {
 
@@ -26,7 +28,15 @@ export function initializeArena(): Arena {
     }
   }
 
-  return { positions, velocities, densities, grid, cellContents, pointToCell };
+  return { positions: positions,
+           velocities: velocities,
+           densities: densities,
+           grid: grid,
+           cellContents: cellContents,
+           pointToCell: pointToCell,
+           invNumParticles: invNumParticles,
+           invH: invH
+        };
 }
 
 function resetDensities(arena: Arena) {
@@ -35,11 +45,8 @@ function resetDensities(arena: Arena) {
   }
 }
 
-function kernel(r: number): number {
-  const h = globals.smoothingRadius;
-
-  const norm = 10 / (7 * Math.PI * h * h);
-  const invH = 1.0 / h;
+function kernel(r: number, invH: number): number {
+  const norm = 10 * invH * invH / (7 * Math.PI);
 
   const q = r * invH;
 
@@ -59,7 +66,7 @@ function addDensity(arena: Arena, i: number, j: number): void {
     const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
 
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    const density = kernel(d) * 3.0 / globals.numParticles;
+    const density = kernel(d, arena.invH) * 3.0 * arena.invNumParticles;
 
     arena.densities[i] += density;
     arena.densities[j] += density;
