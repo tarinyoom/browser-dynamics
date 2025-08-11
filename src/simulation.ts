@@ -65,7 +65,10 @@ function addDensity(arena: Arena, i: number, j: number): void {
     const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
     const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
 
-    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const r2 = dx * dx + dy * dy + dz * dz;
+    if (r2 > globals.smoothingRadius * globals.smoothingRadius) return;
+
+    const d = Math.sqrt(r2);
     const density = kernel(d, arena.invH) * 3.0 * arena.invNumParticles;
 
     arena.densities[i] += density;
