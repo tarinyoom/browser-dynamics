@@ -1,5 +1,5 @@
 import { globals } from './constants';
-import { computeGrid, populateGrid } from './spatial-hash';
+import { computeGrid, populateGrid, hash } from './spatial-hash';
 
 export function initializeArena(): Arena {
   const positions = new Float32Array(globals.numParticles * 3);
@@ -9,7 +9,7 @@ export function initializeArena(): Arena {
   const grid = computeGrid(extents, globals.smoothingRadius);
   const nCells = grid.count.reduce((a, b) => a * b, 1);
   const cellContents: number[][] = Array.from({ length: nCells }, () => []);
-  const pointToCell = new Array(globals.numParticles).fill(0);
+  const pointToCell = Array.from({ length: globals.numParticles }, () => [0, 0, 0]);
   const invNumParticles = 1.0 / globals.numParticles;
   const invH = 1.0 / globals.smoothingRadius;
 
@@ -80,8 +80,16 @@ function accumulateDensities(arena: Arena) {
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
         for (let dz = -1; dz <= 1; dz++) {
-          const neighborCell = cell + dx + dy * arena.grid.count[0] + dz * arena.grid.count[0] * arena.grid.count[1];          
-          if (neighborCell < 0 || neighborCell >= arena.cellContents.length) continue;
+          const nx = cell[0] + dx;
+          const ny = cell[1] + dy;
+          const nz = cell[2] + dz;
+
+          if (nx < 0 || nx >= arena.grid.count[0] ||
+              ny < 0 || ny >= arena.grid.count[1] ||
+              nz < 0 || nz >= arena.grid.count[2]) continue;
+
+          const neighborCell = hash(nx, ny, nz, arena.grid);
+
           for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {
             const j = arena.cellContents[neighborCell][n];
             if (i < j) addDensity(arena, i, j);
@@ -94,7 +102,6 @@ function accumulateDensities(arena: Arena) {
 
 export function step(arena: Arena) {
   populateGrid(arena.positions, arena.grid, arena.cellContents, arena.pointToCell);
-
   resetDensities(arena);
   accumulateDensities(arena);
 
