@@ -4,10 +4,14 @@ import { isDev } from './env';
 
 function makeAnimation(view: View, arena: Arena) {
   const animation = () => {
-    requestAnimationFrame(animation);
-    step(arena);
-    drawFrame(view, arena.positions, arena.densities);
-  }
+    try {
+      step(arena);
+      drawFrame(view, arena.positions, arena.densities);
+      requestAnimationFrame(animation);
+    } catch (err) {
+      console.error("Animation stopped due to error:", err);
+    }
+  };
   return animation;
 }
 
