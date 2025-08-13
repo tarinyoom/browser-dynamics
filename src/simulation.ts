@@ -5,6 +5,7 @@ export function initializeArena(): Arena {
   const positions = new Float32Array(globals.numParticles * 3);
   const velocities = new Float32Array(globals.numParticles * 3);
   const densities = new Float32Array(globals.numParticles);
+  const pressures = new Float32Array(globals.numParticles);
   const extents = [[globals.boxMin, globals.boxMax], [globals.boxMin, globals.boxMax], [0.0, 0.0]];
   const grid = computeGrid(extents, globals.smoothingRadius);
   const nCells = grid.count.reduce((a, b) => a * b, 1);
@@ -12,6 +13,9 @@ export function initializeArena(): Arena {
   const pointToCell = new Array(globals.numParticles).fill(0);
   const invNumParticles = 1.0 / globals.numParticles;
   const invH = 1.0 / globals.smoothingRadius;
+  const referenceDensity = globals.numParticles / (grid.count[0] * grid.count[1] * grid.count[2]);
+  const invReferenceDensity = 1.0 / referenceDensity;
+  const taitB = referenceDensity * globals.taitC * globals.taitC / globals.taitGamma;
 
   // Precompute neighbor offsets for neighboring cells
   const neighborOffsets: number[] = [];
@@ -40,12 +44,15 @@ export function initializeArena(): Arena {
   return { positions: positions,
            velocities: velocities,
            densities: densities,
+           pressures: pressures,
            grid: grid,
            cellContents: cellContents,
            pointToCell: pointToCell,
            invNumParticles: invNumParticles,
            invH: invH,
-           neighborOffsets: neighborOffsets
+           neighborOffsets: neighborOffsets,
+           invReferenceDensity: invReferenceDensity,
+           taitB: taitB
         };
 }
 
@@ -108,10 +115,20 @@ function accumulateDensities(arena: Arena) {
   }
 }
 
+// Using Tait's method for pressure calculation
+function computePressures(arena: Arena) {
+  for (let i = 0; i < globals.numParticles; i++) {
+    const density = arena.densities[i];
+    const pressure = arena.taitB * (Math.pow(density * arena.invReferenceDensity, globals.taitGamma) - 1);
+    arena.pressures[i] = pressure;
+  }
+}
+
 export function step(arena: Arena) {
   populateGrid(arena.positions, arena.grid, arena.cellContents, arena.pointToCell);
   resetDensities(arena);
   accumulateDensities(arena);
+  computePressures(arena);
 
   for (let i = 0; i < globals.numParticles; i++) {
     arena.velocities[i * 3 + 1] += globals.gravity * globals.timestep;

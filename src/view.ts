@@ -85,7 +85,7 @@ export function createView(container: HTMLElement, dev: boolean): View {
   return { renderer, camera, scene, particles, clock };
 }
 
-export function drawFrame(view: View, positions: Float32Array, densities: Float32Array): void {
+export function drawFrame(view: View, positions: Float32Array, scalars: Float32Array): void {
   const geometry = view.particles.geometry as THREE.BufferGeometry;
 
   const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -97,8 +97,8 @@ export function drawFrame(view: View, positions: Float32Array, densities: Float3
 
   let r, g, b;
 
-  for (let i = 0; i < densities.length; i++) {
-    const t = densities[i];
+  for (let i = 0; i < scalars.length; i++) {
+    const t = scalars[i];
 
     // [0, 1] -> [cold, hot] color mapping
     if (t < 0.5) {

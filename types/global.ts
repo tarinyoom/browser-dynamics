@@ -14,12 +14,17 @@ declare global {
     positions: Float32Array;
     velocities: Float32Array;
     densities: Float32Array;
+    pressures: Float32Array;
     grid: Grid;
     cellContents: number[][]; // index-based lists
     pointToCell: number[]; // maps particle index to cell index
     invNumParticles: number;
     invH: number;
     neighborOffsets: number[]; // in grid space
+
+    // Additional derived properties
+    invReferenceDensity: number; // inverse of reference density
+    taitB: number; // 'B' constant for Tait's equation
   }
 
   interface CalculationParameters {
@@ -31,6 +36,9 @@ declare global {
     boxMin: number;
     boxMax: number;
     gravity: number;
+
+    taitGamma: number; // exponent for Tait's equation
+    taitC: number; // speed of sound in Tait's equation
   }
 
   interface View {

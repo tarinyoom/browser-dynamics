@@ -6,7 +6,7 @@ function makeAnimation(view: View, arena: Arena) {
   const animation = () => {
     try {
       step(arena);
-      drawFrame(view, arena.positions, arena.densities);
+      drawFrame(view, arena.positions, arena.pressures);
       requestAnimationFrame(animation);
     } catch (err) {
       console.error("Animation stopped due to error:", err);
