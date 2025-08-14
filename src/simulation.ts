@@ -77,6 +77,25 @@ function kernel(r: number, invH: number): number {
 
 }
 
+function dKernel(r: number, invH: number): number {
+  const norm = 10 * invH * invH / (7 * Math.PI);
+
+  const q = r * invH;
+
+  if (q >= 2) return 0;
+  if (q < 1) {
+    const ret = norm * (- 3.0 * q + 2.25 * q * q) * invH;
+    //console.log(`dKernel: r=${r}, invH=${invH}, q=${q}, ret=${ret}`);
+    return ret;
+  } else {
+    const term = 2 - q;
+    const ret = -1.0 * norm * 0.75 * term * term * invH;
+    //console.log(`dKernel: r=${r}, invH=${invH}, q=${q}, ret=${ret}`);
+    return ret;
+  }
+
+}
+
 function addDensity(arena: Arena, i: number, j: number): void {
     const dx = arena.positions[i * 3] - arena.positions[j * 3];
     const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
@@ -119,8 +138,88 @@ function accumulateDensities(arena: Arena) {
 function computePressures(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
     const density = arena.densities[i];
+    //console.log(`arenaInvReferenceDensity is ${arena.invReferenceDensity}, density is ${density}`);
     const pressure = arena.taitB * (Math.pow(density * arena.invReferenceDensity, globals.taitGamma) - 1);
+    //console.log(`Particle ${i} density: ${density}, pressure: ${pressure}`);
     arena.pressures[i] = pressure;
+    console.log(`Particle ${i} pressure: ${pressure}, density: ${density}`);
+    console.log(`taitB is ${arena.taitB}, invReferenceDensity is ${arena.invReferenceDensity}, taitGamma is ${globals.taitGamma}`);
+  }
+}
+
+function accelerateAlongPressureGradient(arena: Arena, i: number, j: number): void {
+  if (arena.densities[i] <= 0 || arena.densities[j] <= 0) return;
+
+  const dx = arena.positions[i * 3] - arena.positions[j * 3];
+  const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
+  const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
+
+  const r2 = dx * dx + dy * dy + dz * dz;
+
+  // Early exit before having to compute square root
+  if (r2 > globals.smoothingRadius * globals.smoothingRadius) return;
+
+  const d = Math.sqrt(r2);
+
+  if (d < .2 * globals.smoothingRadius) return;
+
+  const rhoisq = arena.densities[i] * arena.densities[i];
+  const rhojsq = arena.densities[j] * arena.densities[j];
+
+  // Compute pressure contributions
+  const pi = rhoisq > 1e-6 ? arena.pressures[i] / rhoisq : 0;
+  const pj = rhojsq > 1e-6 ? arena.pressures[j] / rhojsq : 0;
+
+  //console.log(`pi is ${pi}, pj is ${pj}, rhoisq is ${rhoisq}, rhojsq is ${rhojsq}, arena pressures are ${arena.pressures[i]}, ${arena.pressures[j]}, d is ${d}`);
+
+  const invD = 1.0 / d;
+
+  const dx_normed = dx * invD;
+  const dy_normed = dy * invD;
+  const dz_normed = dz * invD;
+
+  const scale = dKernel(d, arena.invH) * (pi + pj);
+
+  if (scale > 1) {
+    //console.warn(`Scale factor ${scale} exceeds 1`);
+  }
+
+  //console.log(`Particle ${i} pressure: ${arena.pressures[i]}, density: ${arena.densities[i]}`);
+
+  // Compute acceleration contribution
+  const ax = dx_normed * scale;
+  const ay = dy_normed * scale;
+  const az = dz_normed * scale;
+
+  // Update velocities
+  arena.velocities[i * 3] += ax * globals.timestep;
+  arena.velocities[i * 3 + 1] += ay * globals.timestep;
+  arena.velocities[i * 3 + 2] += az * globals.timestep;
+
+  arena.velocities[j * 3] -= ax * globals.timestep;
+  arena.velocities[j * 3 + 1] -= ay * globals.timestep;
+  arena.velocities[j * 3 + 2] -= az * globals.timestep;
+
+  //console.log(`Accelerating particles ${i} and ${j}: (${ax.toFixed(4)}, ${ay.toFixed(4)}, ${az.toFixed(4)})`);
+}
+
+function accelerate(arena: Arena): void {
+  for (let i = 0; i < globals.numParticles; i++) {
+    const cell = arena.pointToCell[i];
+
+    for (let j = 0; j < 9; j++) {
+
+      // Neighbor cell index does not need to be checked for bounds because of grid padding
+      const neighborCell = cell + arena.neighborOffsets[j];
+
+      for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {
+        const j = arena.cellContents[neighborCell][n];
+
+        // Only accumulate density if i < j to avoid double counting
+        if (i < j) accelerateAlongPressureGradient(arena, i, j);
+      }
+
+    }
   }
 }
 
@@ -129,6 +228,7 @@ export function step(arena: Arena) {
   resetDensities(arena);
   accumulateDensities(arena);
   computePressures(arena);
+  accelerate(arena);
 
   for (let i = 0; i < globals.numParticles; i++) {
     arena.velocities[i * 3 + 1] += globals.gravity * globals.timestep;
