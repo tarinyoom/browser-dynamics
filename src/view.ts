@@ -23,15 +23,15 @@ function recordAndSave(canvas: HTMLCanvasElement, fps: number, duration: number)
   setTimeout(() => recorder.stop(), duration);
 }
 
-function createRenderer(container: HTMLElement, dev: boolean): THREE.WebGLRenderer {
+function createRenderer(container: HTMLElement, recordUntil: number | undefined): THREE.WebGLRenderer {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   container.appendChild(renderer.domElement);
 
-  if (dev) {
+  if (recordUntil) {
       const canvas = renderer.domElement;
-      recordAndSave(canvas, 60, 5000);
+      recordAndSave(canvas, 60, recordUntil);
   }
 
   return renderer;
@@ -73,8 +73,8 @@ function createParticles(count: number): THREE.Points {
   return new THREE.Points(geometry, material);
 }
 
-export function createView(container: HTMLElement, dev: boolean): View {
-  const renderer = createRenderer(container, dev);
+export function createView(container: HTMLElement, recordUntil: number | undefined): View {
+  const renderer = createRenderer(container, recordUntil);
   const camera = createCamera(container.clientWidth / container.clientHeight);
   const scene = createScene();
   const particles = createParticles(globals.numParticles);

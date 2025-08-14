@@ -41,6 +41,11 @@ declare global {
     taitC: number; // speed of sound in Tait's equation
   }
 
+  interface DebugParameters {
+    recordUntil: number;
+    pauseAfter: number;
+  }
+
   interface View {
     renderer: WebGLRenderer;
     camera: PerspectiveCamera;

@@ -9,4 +9,9 @@ export const globals: CalculationParameters = {
   gravity: -1.0,
   taitC: 10.0,
   taitGamma: 7.0
-};
+} as const;
+
+export const debug: DebugParameters = {
+  recordUntil: 5000,
+  pauseAfter: 100
+} as const;
