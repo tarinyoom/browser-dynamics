@@ -1,12 +1,12 @@
 export const globals: CalculationParameters = {
-  timestep: 1/60,
+  timestep: 0.001,
   maxTimestepsPerFrame: 5,
   numParticles: 1000,
-  smoothingRadius: 0.2,
+  smoothingRadius: 0.3,
   dim: 2,
   boxMin: -1.6,
   boxMax: 1.6,
-  gravity: -1.0,
-  taitC: 10.0,
+  gravity: -100.0,
+  taitC: 0.1,
   taitGamma: 7.0
 };
