@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { kernel } from "../src/kernel";
+import { kernel, dKernel } from "../src/kernel";
 
 // Helper: numerical scan over [a,b] with step
 function scan(a: number, b: number, step: number): number[] {
@@ -40,6 +40,26 @@ describe("Kernel properties", () => {
         const w = kernel(rs[i], invH);
         expect(w).toBeLessThanOrEqual(prev + 1e-12);
         prev = w;
+      }
+    });
+
+    it("Derivative consistency test", () => {
+      const h = 1 / invH;
+      const delta = h / 200000;
+      const rs = scan(5 * delta, h - 5 * delta, h / 4000);
+
+      for (const r of rs) {
+        const wPlus  = kernel(r + delta, invH);
+        const wMinus = kernel(r - delta, invH);
+        const fd = (wPlus - wMinus) / (2 * delta);
+
+        const d = dKernel(r, invH);
+
+        const atol = 1e-8 * Math.pow(invH, 3);
+        const rtol = 5e-4;
+        const tol = Math.max(atol, rtol * Math.max(1e-16, Math.abs(d), Math.abs(fd)));
+
+        expect(Math.abs(fd - d)).toBeLessThanOrEqual(tol);
       }
     });
 
