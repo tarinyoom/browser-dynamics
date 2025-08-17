@@ -108,7 +108,7 @@ function computePressures(arena: Arena) {
 }
 
 function initializeTimestep(arena: Arena) {
-  populateGrid(arena.positions, arena.grid, arena.cellContents, arena.pointToCell);
+  populateGrid(arena.positions, arena.grid, arena.cellContents, arena.pointToCell, globals.numParticles, arena.invH);
 
   for (let i = 0; i < globals.numParticles * 3; i++) {
     arena.preAcceleration[i] = arena.acceleration[i];
