@@ -13,5 +13,5 @@ export const globals: CalculationParameters = {
 
 export const debug: DebugParameters = {
   recordUntil: 5000,
-  pauseAfter: 100
+  pauseAfter: 1000
 } as const;

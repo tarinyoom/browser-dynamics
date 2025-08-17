@@ -61,25 +61,6 @@ export function initializeArena(): Arena {
         };
 }
 
-function resetDensities(arena: Arena) {
-  for (let i = 0; i < globals.numParticles; i++) {
-    arena.densities[i] = 0;
-  }
-}
-
-function copyAcceleration(arena: Arena) {
-  for (let i = 0; i < globals.numParticles * 3; i++) {
-    arena.preAcceleration[i] = arena.acceleration[i];
-  }
-}
-
-function resetAcceleration(arena: Arena) {
-  for (let i = 0; i < globals.numParticles * 3; i++) {
-    arena.acceleration[i] = 0;
-  }
-}
-
-
 function addDensity(arena: Arena, i: number, j: number): void {
     const dx = arena.positions[i * 3] - arena.positions[j * 3];
     const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
@@ -118,7 +99,6 @@ function accumulateDensities(arena: Arena) {
   }
 }
 
-
 function computePressures(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
     const density = arena.densities[i];
@@ -127,23 +107,28 @@ function computePressures(arena: Arena) {
   }
 }
 
-export function step(arena: Arena) {
+function initializeTimestep(arena: Arena) {
   populateGrid(arena.positions, arena.grid, arena.cellContents, arena.pointToCell);
-  resetDensities(arena);
+
+  for (let i = 0; i < globals.numParticles * 3; i++) {
+    arena.preAcceleration[i] = arena.acceleration[i];
+    arena.acceleration[i] = 0;
+  }
+
+  for (let i = 0; i < globals.numParticles; i++) {
+    arena.densities[i] = 0;
+  }
+}
+
+export function step(arena: Arena) {
+  initializeTimestep(arena);
+
   accumulateDensities(arena);
   computePressures(arena);
-
-  
-  copyAcceleration(arena);
-
-  
-  resetAcceleration(arena);
-
   
   for (let i = 0; i < globals.numParticles; i++) {
     arena.acceleration[i * 3 + 1] += globals.gravity;
   }
-
   
   for (let i = 0; i < globals.numParticles; i++) {
     
