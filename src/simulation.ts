@@ -120,28 +120,17 @@ function initializeTimestep(arena: Arena) {
   }
 }
 
-export function step(arena: Arena) {
-  initializeTimestep(arena);
-
-  accumulateDensities(arena);
-  computePressures(arena);
-  
-  for (let i = 0; i < globals.numParticles; i++) {
-    arena.acceleration[i * 3 + 1] += globals.gravity;
-  }
-  
-  for (let i = 0; i < globals.numParticles; i++) {
-    
+function leapfrog(arena: Arena) {
+  for (let i = 0; i < globals.numParticles; i++) {    
     arena.positions[i * 3] += arena.velocities[i * 3] * globals.timestep + 0.5 * arena.preAcceleration[i * 3] * globals.timestep * globals.timestep;
     arena.positions[i * 3 + 1] += arena.velocities[i * 3 + 1] * globals.timestep + 0.5 * arena.preAcceleration[i * 3 + 1] * globals.timestep * globals.timestep;
-    arena.positions[i * 3 + 2] += arena.velocities[i * 3 + 2] * globals.timestep + 0.5 * arena.preAcceleration[i * 3 + 2] * globals.timestep * globals.timestep;
     
     arena.velocities[i * 3] += 0.5 * (arena.preAcceleration[i * 3] + arena.acceleration[i * 3]) * globals.timestep;
     arena.velocities[i * 3 + 1] += 0.5 * (arena.preAcceleration[i * 3 + 1] + arena.acceleration[i * 3 + 1]) * globals.timestep;
-    arena.velocities[i * 3 + 2] += 0.5 * (arena.preAcceleration[i * 3 + 2] + arena.acceleration[i * 3 + 2]) * globals.timestep;
   }
+}
 
-  
+function reflect(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
     const pos = arena.positions.subarray(i * 3, (i + 1) * 3);
     const vel = arena.velocities.subarray(i * 3, (i + 1) * 3);
@@ -156,4 +145,19 @@ export function step(arena: Arena) {
       }
     }
   }
+}
+
+export function step(arena: Arena) {
+  initializeTimestep(arena);
+
+  accumulateDensities(arena);
+  computePressures(arena);
+
+  for (let i = 0; i < globals.numParticles; i++) {
+    arena.acceleration[i * 3 + 1] += globals.gravity;
+  }
+
+  reflect(arena);
+
+  leapfrog(arena);
 }
