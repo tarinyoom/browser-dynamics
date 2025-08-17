@@ -6,8 +6,8 @@ export const globals: CalculationParameters = {
   dim: 2,
   boxMin: -1.6,
   boxMax: 1.6,
-  gravity: -500.0,
-  taitC: 1.0,
+  gravity: -100.0,
+  taitC: 10.0,
   taitGamma: 7.0
 } as const;
 

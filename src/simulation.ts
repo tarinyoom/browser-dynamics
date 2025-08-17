@@ -29,18 +29,41 @@ export function initializeArena(): Arena {
     }
   }
 
-  for (let i = 0; i < globals.numParticles; i++) {
-
-    densities[i] = Math.random();
-
-    for (let j = 0; j < globals.dim; j++) {
-      positions[i * 3 + j] = (Math.random() - 0.5) * 2;
-      velocities[i * 3 + j] = (Math.random() - 0.5) * 1;
-    }
-
-    for (let j = globals.dim; j < 3; j++) {
-      positions[i * 3 + j] = 0;
-      velocities[i * 3 + j] = 0;
+  // Create uniform grid layout
+  const sqrtParticles = Math.sqrt(globals.numParticles);
+  const particlesPerRow = Math.ceil(sqrtParticles);
+  const particlesPerCol = Math.ceil(globals.numParticles / particlesPerRow);
+  
+  const domainWidth = globals.boxMax - globals.boxMin;
+  const domainHeight = globals.boxMax - globals.boxMin;
+  
+  // Add small margins to avoid particles on exact boundaries
+  const margin = 0.1;
+  const gridWidth = domainWidth - 2 * margin;
+  const gridHeight = domainHeight - 2 * margin;
+  
+  const spacingX = gridWidth / (particlesPerRow - 1);
+  const spacingY = gridHeight / (particlesPerCol - 1);
+  
+  let particleIndex = 0;
+  for (let row = 0; row < particlesPerCol && particleIndex < globals.numParticles; row++) {
+    for (let col = 0; col < particlesPerRow && particleIndex < globals.numParticles; col++) {
+      const x = globals.boxMin + margin + col * spacingX;
+      const y = globals.boxMin + margin + row * spacingY;
+      
+      positions[particleIndex * 3] = x;
+      positions[particleIndex * 3 + 1] = y;
+      positions[particleIndex * 3 + 2] = 0;
+      
+      // Initialize velocities to zero for stable start
+      velocities[particleIndex * 3] = 0;
+      velocities[particleIndex * 3 + 1] = 0;
+      velocities[particleIndex * 3 + 2] = 0;
+      
+      // Initialize density to zero (will be computed)
+      densities[particleIndex] = 0;
+      
+      particleIndex++;
     }
   }
 
