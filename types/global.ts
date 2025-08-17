@@ -21,7 +21,7 @@ declare global {
     cellContents: number[][]; // index-based lists
     pointToCell: number[]; // maps particle index to cell index
     neighbors: number[][]; // neighbor adjacency list for each particle
-    invNumParticles: number;
+    particleMass: number;
     invH: number;
     neighborOffsets: number[]; // in grid space
 

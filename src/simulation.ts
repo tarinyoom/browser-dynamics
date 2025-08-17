@@ -15,12 +15,11 @@ export function initializeArena(): Arena {
   const cellContents: number[][] = Array.from({ length: nCells }, () => []);
   const pointToCell = new Array(globals.numParticles).fill(0);
   const neighbors: number[][] = Array.from({ length: globals.numParticles }, () => []);
-  const invNumParticles = 1.0 / globals.numParticles;
+  const particleMass = 1.0 / globals.numParticles;
   const invH = 1.0 / globals.smoothingRadius;
-  const referenceDensity = globals.numParticles / (grid.count[0] * grid.count[1] * grid.count[2]);
+  const referenceDensity = 1.0 / (globals.boxMax - globals.boxMin) ** 2;
   const invReferenceDensity = 1.0 / referenceDensity;
   const taitB = referenceDensity * globals.taitC * globals.taitC / globals.taitGamma;
-
   
   const neighborOffsets: number[] = [];
   for (let dx = -1; dx <= 1; dx++) {
@@ -55,7 +54,7 @@ export function initializeArena(): Arena {
            cellContents: cellContents,
            pointToCell: pointToCell,
            neighbors: neighbors,
-           invNumParticles: invNumParticles,
+           particleMass: particleMass,
            invH: invH,
            neighborOffsets: neighborOffsets,
            invReferenceDensity: invReferenceDensity,
@@ -74,7 +73,7 @@ function addDensity(arena: Arena, i: number, j: number): void {
     if (r2 > globals.smoothingRadius * globals.smoothingRadius) return;
 
     const d = Math.sqrt(r2);
-    const density = kernel(d, arena.invH) * 3.0 * arena.invNumParticles;
+    const density = kernel(d, arena.invH) * arena.particleMass;
 
     arena.densities[i] += density;
     arena.densities[j] += density;
@@ -91,6 +90,7 @@ function accumulateDensities(arena: Arena, neighbors: number[][]) {
 function computePressures(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
     const density = arena.densities[i];
+    console.log(`densitiy is ${density} and ref is ${1.0 / arena.invReferenceDensity}`);
     const pressure = arena.taitB * (Math.pow(density * arena.invReferenceDensity, globals.taitGamma) - 1);
     arena.pressures[i] = pressure;
   }

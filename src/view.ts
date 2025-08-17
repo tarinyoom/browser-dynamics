@@ -98,7 +98,7 @@ export function drawFrame(view: View, positions: Float32Array, scalars: Float32A
   let r, g, b;
 
   for (let i = 0; i < scalars.length; i++) {
-    const t = (scalars[i] + 0.5) * 0.05;
+    const t = (scalars[i] + 10.0) * 0.05;
 
     // [0, 1] -> [cold, hot] color mapping
     if (t < 0.5) {
