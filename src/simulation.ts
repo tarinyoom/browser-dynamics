@@ -1,5 +1,5 @@
 import { globals } from './constants';
-import { computeGrid, populateGrid } from './spatial-hash';
+import { computeGrid, populateGrid, findNeighbors } from './spatial-hash';
 import { kernel } from './kernel';
 
 export function initializeArena(): Arena {
@@ -78,23 +78,10 @@ function addDensity(arena: Arena, i: number, j: number): void {
     arena.densities[j] += density;
 }
 
-function accumulateDensities(arena: Arena) {
-
-  for (let i = 0; i < globals.numParticles; i++) {
-    const cell = arena.pointToCell[i];
-
-    for (let j = 0; j < 9; j++) {
-
-      
-      const neighborCell = cell + arena.neighborOffsets[j];
-
-      for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {
-        const j = arena.cellContents[neighborCell][n];
-
-        
-        if (i < j) addDensity(arena, i, j);
-      }
-
+function accumulateDensities(arena: Arena, neighbors: number[][]) {
+  for (let i = 0; i < neighbors.length; i++) {
+    for (const j of neighbors[i]) {
+      addDensity(arena, i, j);
     }
   }
 }
@@ -118,6 +105,10 @@ function initializeTimestep(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
     arena.densities[i] = 0;
   }
+}
+
+function generateNeighborLists(arena: Arena): number[][] {
+  return findNeighbors(arena.grid, arena.cellContents, globals.numParticles);
 }
 
 function leapfrog(arena: Arena) {
@@ -149,8 +140,9 @@ function reflect(arena: Arena) {
 
 export function step(arena: Arena) {
   initializeTimestep(arena);
+  const neighbors = generateNeighborLists(arena);
 
-  accumulateDensities(arena);
+  accumulateDensities(arena, neighbors);
   computePressures(arena);
 
   for (let i = 0; i < globals.numParticles; i++) {
