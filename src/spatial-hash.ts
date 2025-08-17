@@ -54,8 +54,11 @@ function populateGrid(positions: Float32Array, grid: Grid, contents: number[][],
  }
 }
 
-function findNeighbors(grid: Grid, contents: number[][], numParticles: number): number[][] {
-  const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
+function findNeighbors(grid: Grid, contents: number[][], neighbors: number[][]): void {
+  // Clear existing neighbor lists
+  for (let i = 0; i < neighbors.length; i++) {
+    neighbors[i].length = 0;
+  }
   
   // Iterate through all grid cells
   for (let x = 0; x < grid.count[0]; x++) {
@@ -95,8 +98,6 @@ function findNeighbors(grid: Grid, contents: number[][], numParticles: number): 
       }
     }
   }
-  
-  return neighbors;
 }
 
 export { computeGrid, populateGrid, hash, findNeighbors };

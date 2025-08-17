@@ -14,6 +14,7 @@ export function initializeArena(): Arena {
   const nCells = grid.count.reduce((a, b) => a * b, 1);
   const cellContents: number[][] = Array.from({ length: nCells }, () => []);
   const pointToCell = new Array(globals.numParticles).fill(0);
+  const neighbors: number[][] = Array.from({ length: globals.numParticles }, () => []);
   const invNumParticles = 1.0 / globals.numParticles;
   const invH = 1.0 / globals.smoothingRadius;
   const referenceDensity = globals.numParticles / (grid.count[0] * grid.count[1] * grid.count[2]);
@@ -53,6 +54,7 @@ export function initializeArena(): Arena {
            grid: grid,
            cellContents: cellContents,
            pointToCell: pointToCell,
+           neighbors: neighbors,
            invNumParticles: invNumParticles,
            invH: invH,
            neighborOffsets: neighborOffsets,
@@ -107,8 +109,8 @@ function initializeTimestep(arena: Arena) {
   }
 }
 
-function generateNeighborLists(arena: Arena): number[][] {
-  return findNeighbors(arena.grid, arena.cellContents, globals.numParticles);
+function generateNeighborLists(arena: Arena) {
+  findNeighbors(arena.grid, arena.cellContents, arena.neighbors);
 }
 
 function leapfrog(arena: Arena) {
@@ -140,9 +142,9 @@ function reflect(arena: Arena) {
 
 export function step(arena: Arena) {
   initializeTimestep(arena);
-  const neighbors = generateNeighborLists(arena);
+  generateNeighborLists(arena);
 
-  accumulateDensities(arena, neighbors);
+  accumulateDensities(arena, arena.neighbors);
   computePressures(arena);
 
   for (let i = 0; i < globals.numParticles; i++) {
