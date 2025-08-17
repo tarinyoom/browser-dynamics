@@ -112,7 +112,8 @@ describe('findNeighbors', () => {
     ]);
     
     populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
-    const neighbors = findNeighbors(grid, cellContents, numParticles);
+    const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
+    findNeighbors(grid, cellContents, neighbors);
     
     // Each point should be neighbors with all points with higher indices
     expect(neighbors[0]).toEqual([1, 2, 3]);
@@ -140,7 +141,8 @@ describe('findNeighbors', () => {
     ]);
     
     populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
-    const neighbors = findNeighbors(grid, cellContents, numParticles);
+    const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
+    findNeighbors(grid, cellContents, neighbors);
     
     // Each point should be neighbors with all other points
     expect(neighbors[0]).toEqual([1, 2, 3]);
@@ -168,7 +170,8 @@ describe('findNeighbors', () => {
     ]);
     
     populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
-    const neighbors = findNeighbors(grid, cellContents, numParticles);
+    const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
+    findNeighbors(grid, cellContents, neighbors);
     
     // Points 0 and 2 should be neighbors, points 1 and 3 should be neighbors
     // But 0,1 and 0,3 and 2,1 and 2,3 should NOT be neighbors
@@ -195,7 +198,8 @@ describe('findNeighbors', () => {
     ]);
     
     populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
-    const neighbors = findNeighbors(grid, cellContents, numParticles);
+    const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
+    findNeighbors(grid, cellContents, neighbors);
     
     // Points should not be neighbors (too far apart)
     expect(neighbors[0]).toEqual([]);
@@ -221,7 +225,8 @@ describe('findNeighbors', () => {
     ]);
     
     populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
-    const neighbors = findNeighbors(grid, cellContents, numParticles);
+    const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
+    findNeighbors(grid, cellContents, neighbors);
     
     // Verify no point appears in neighbor list of a point with lower index
     for (let i = 0; i < neighbors.length; i++) {
