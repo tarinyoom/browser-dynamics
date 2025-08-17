@@ -5,6 +5,8 @@ import { kernel } from './kernel';
 export function initializeArena(): Arena {
   const positions = new Float32Array(globals.numParticles * 3);
   const velocities = new Float32Array(globals.numParticles * 3);
+  const acceleration = new Float32Array(globals.numParticles * 3);
+  const preAcceleration = new Float32Array(globals.numParticles * 3);
   const densities = new Float32Array(globals.numParticles);
   const pressures = new Float32Array(globals.numParticles);
   const extents = [[globals.boxMin, globals.boxMax], [globals.boxMin, globals.boxMax], [0.0, 0.0]];
@@ -18,7 +20,7 @@ export function initializeArena(): Arena {
   const invReferenceDensity = 1.0 / referenceDensity;
   const taitB = referenceDensity * globals.taitC * globals.taitC / globals.taitGamma;
 
-  // Precompute neighbor offsets for neighboring cells
+  
   const neighborOffsets: number[] = [];
   for (let dx = -1; dx <= 1; dx++) {
     for (let dy = -1; dy <= 1; dy++) {
@@ -44,6 +46,8 @@ export function initializeArena(): Arena {
 
   return { positions: positions,
            velocities: velocities,
+           acceleration: acceleration,
+           preAcceleration: preAcceleration,
            densities: densities,
            pressures: pressures,
            grid: grid,
@@ -63,6 +67,18 @@ function resetDensities(arena: Arena) {
   }
 }
 
+function copyAcceleration(arena: Arena) {
+  for (let i = 0; i < globals.numParticles * 3; i++) {
+    arena.preAcceleration[i] = arena.acceleration[i];
+  }
+}
+
+function resetAcceleration(arena: Arena) {
+  for (let i = 0; i < globals.numParticles * 3; i++) {
+    arena.acceleration[i] = 0;
+  }
+}
+
 
 function addDensity(arena: Arena, i: number, j: number): void {
     const dx = arena.positions[i * 3] - arena.positions[j * 3];
@@ -71,7 +87,7 @@ function addDensity(arena: Arena, i: number, j: number): void {
 
     const r2 = dx * dx + dy * dy + dz * dz;
 
-    // Early exit before having to compute square root
+    
     if (r2 > globals.smoothingRadius * globals.smoothingRadius) return;
 
     const d = Math.sqrt(r2);
@@ -88,13 +104,13 @@ function accumulateDensities(arena: Arena) {
 
     for (let j = 0; j < 9; j++) {
 
-      // Neighbor cell index does not need to be checked for bounds because of grid padding
+      
       const neighborCell = cell + arena.neighborOffsets[j];
 
       for (let n = 0; n < arena.cellContents[neighborCell].length; n++) {
         const j = arena.cellContents[neighborCell][n];
 
-        // Only accumulate density if i < j to avoid double counting
+        
         if (i < j) addDensity(arena, i, j);
       }
 
@@ -102,7 +118,7 @@ function accumulateDensities(arena: Arena) {
   }
 }
 
-// Using Tait's method for pressure calculation
+
 function computePressures(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
     const density = arena.densities[i];
@@ -117,15 +133,30 @@ export function step(arena: Arena) {
   accumulateDensities(arena);
   computePressures(arena);
 
+  
+  copyAcceleration(arena);
+
+  
+  resetAcceleration(arena);
+
+  
   for (let i = 0; i < globals.numParticles; i++) {
-    arena.velocities[i * 3 + 1] += globals.gravity * globals.timestep;
+    arena.acceleration[i * 3 + 1] += globals.gravity;
   }
 
+  
   for (let i = 0; i < globals.numParticles; i++) {
-    arena.positions[i * 3] += arena.velocities[i * 3] * globals.timestep;
-    arena.positions[i * 3 + 1] += arena.velocities[i * 3 + 1] * globals.timestep;
+    
+    arena.positions[i * 3] += arena.velocities[i * 3] * globals.timestep + 0.5 * arena.preAcceleration[i * 3] * globals.timestep * globals.timestep;
+    arena.positions[i * 3 + 1] += arena.velocities[i * 3 + 1] * globals.timestep + 0.5 * arena.preAcceleration[i * 3 + 1] * globals.timestep * globals.timestep;
+    arena.positions[i * 3 + 2] += arena.velocities[i * 3 + 2] * globals.timestep + 0.5 * arena.preAcceleration[i * 3 + 2] * globals.timestep * globals.timestep;
+    
+    arena.velocities[i * 3] += 0.5 * (arena.preAcceleration[i * 3] + arena.acceleration[i * 3]) * globals.timestep;
+    arena.velocities[i * 3 + 1] += 0.5 * (arena.preAcceleration[i * 3 + 1] + arena.acceleration[i * 3 + 1]) * globals.timestep;
+    arena.velocities[i * 3 + 2] += 0.5 * (arena.preAcceleration[i * 3 + 2] + arena.acceleration[i * 3 + 2]) * globals.timestep;
   }
 
+  
   for (let i = 0; i < globals.numParticles; i++) {
     const pos = arena.positions.subarray(i * 3, (i + 1) * 3);
     const vel = arena.velocities.subarray(i * 3, (i + 1) * 3);

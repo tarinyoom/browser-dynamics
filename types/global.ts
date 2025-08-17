@@ -13,6 +13,8 @@ declare global {
   interface Arena {
     positions: Float32Array;
     velocities: Float32Array;
+    acceleration: Float32Array;
+    preAcceleration: Float32Array;
     densities: Float32Array;
     pressures: Float32Array;
     grid: Grid;
