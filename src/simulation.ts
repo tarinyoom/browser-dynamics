@@ -1,6 +1,6 @@
 import { globals } from './constants';
 import { computeGrid, populateGrid, findNeighbors } from './spatial-hash';
-import { kernel } from './kernel';
+import { kernel, dKernel } from './kernel';
 
 export function initializeArena(): Arena {
   const positions = new Float32Array(globals.numParticles * 3);
@@ -139,6 +139,54 @@ function reflect(arena: Arena) {
   }
 }
 
+function accelerateAlongPressureGradient(arena: Arena, i: number, j: number): void {
+  if (arena.densities[i] <= 0 || arena.densities[j] <= 0) return;
+
+  const dx = arena.positions[i * 3] - arena.positions[j * 3];
+  const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
+
+  const r2 = dx * dx + dy * dy;
+
+  // Early exit before having to compute square root
+  if (r2 > globals.smoothingRadius * globals.smoothingRadius) return;
+
+  const d = Math.sqrt(r2);
+
+  if (d < .2 * globals.smoothingRadius) return;
+
+  const rhoisq = arena.densities[i] * arena.densities[i];
+  const rhojsq = arena.densities[j] * arena.densities[j];
+
+  if (rhoisq < 1e-6 || rhojsq < 1e-6) return;
+
+  const pi = arena.pressures[i] / rhoisq;
+  const pj = arena.pressures[j] / rhojsq;
+
+  const invD = 1.0 / d;
+
+  const dx_normed = dx * invD;
+  const dy_normed = dy * invD;
+
+  const scale = dKernel(d, arena.invH) * (pi + pj) * arena.particleMass;
+
+  const ax = dx_normed * scale;
+  const ay = dy_normed * scale;
+
+  arena.acceleration[i * 3] -= ax;
+  arena.acceleration[i * 3 + 1] -= ay;
+
+  arena.acceleration[j * 3] += ax;
+  arena.acceleration[j * 3 + 1] += ay;
+}
+
+function addMomentum(arena: Arena) {
+  for (let i = 0; i < globals.numParticles; i++) {
+    for (const j of arena.neighbors[i]) {
+      accelerateAlongPressureGradient(arena, i, j);
+    }
+  }
+}
+
 export function step(arena: Arena) {
   initializeTimestep(arena);
   generateNeighborLists(arena);
@@ -149,6 +197,8 @@ export function step(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
     arena.acceleration[i * 3 + 1] += globals.gravity;
   }
+
+  addMomentum(arena);
 
   reflect(arena);
 
