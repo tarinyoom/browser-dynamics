@@ -90,7 +90,6 @@ function accumulateDensities(arena: Arena, neighbors: number[][]) {
 function computePressures(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
     const density = arena.densities[i];
-    console.log(`densitiy is ${density} and ref is ${1.0 / arena.invReferenceDensity}`);
     const pressure = arena.taitB * (Math.pow(density * arena.invReferenceDensity, globals.taitGamma) - 1);
     arena.pressures[i] = pressure;
   }
