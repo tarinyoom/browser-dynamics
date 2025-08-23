@@ -47,6 +47,7 @@ declare global {
   interface DebugParameters {
     recordUntil: number;
     pauseAfter: number;
+    colorMode: 'pressure' | 'density';
   }
 
   interface View {
