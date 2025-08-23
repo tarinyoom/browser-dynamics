@@ -17,7 +17,7 @@ export function initializeArena(): Arena {
   const neighbors: number[][] = Array.from({ length: globals.numParticles }, () => []);
   const particleMass = 1.0 / globals.numParticles;
   const invH = 1.0 / globals.smoothingRadius;
-  const referenceDensity = 1.0 / (globals.boxMax - globals.boxMin) ** 2;
+  const referenceDensity = 2.0 / (globals.boxMax - globals.boxMin) ** 2;
   const invReferenceDensity = 1.0 / referenceDensity;
   const taitB = referenceDensity * globals.taitC * globals.taitC / globals.taitGamma;
   
@@ -29,38 +29,41 @@ export function initializeArena(): Arena {
     }
   }
 
-  // Create uniform grid layout
-  const sqrtParticles = Math.sqrt(globals.numParticles);
-  const particlesPerRow = Math.ceil(sqrtParticles);
-  const particlesPerCol = Math.ceil(globals.numParticles / particlesPerRow);
-  
   const domainWidth = globals.boxMax - globals.boxMin;
-  const domainHeight = globals.boxMax - globals.boxMin;
   
-  // Add small margins to avoid particles on exact boundaries
-  const margin = 0.1;
-  const gridWidth = domainWidth - 2 * margin;
-  const gridHeight = domainHeight - 2 * margin;
+  const triangleBaseY = globals.boxMin + 0.1;
+  const triangleTopY = globals.boxMax - 0.1;
+  const triangleHeight = triangleTopY - triangleBaseY;
+  const triangleBaseWidth = domainWidth - 0.2;
   
-  const spacingX = gridWidth / (particlesPerRow - 1);
-  const spacingY = gridHeight / (particlesPerCol - 1);
+  const aspectRatio = triangleBaseWidth / triangleHeight;
+  const approxRows = Math.sqrt(globals.numParticles / (0.5 * aspectRatio));
+  const rows = Math.max(1, Math.ceil(approxRows));
   
   let particleIndex = 0;
-  for (let row = 0; row < particlesPerCol && particleIndex < globals.numParticles; row++) {
-    for (let col = 0; col < particlesPerRow && particleIndex < globals.numParticles; col++) {
-      const x = globals.boxMin + margin + col * spacingX;
-      const y = globals.boxMin + margin + row * spacingY;
+  
+  for (let row = 0; row < rows && particleIndex < globals.numParticles; row++) {
+
+    const rowProgress = row / (rows - 1);
+    const y = triangleBaseY + rowProgress * triangleHeight;
+    
+    const widthAtHeight = triangleBaseWidth * (1 - rowProgress);
+    
+    const particlesInRow = Math.max(1, Math.ceil(widthAtHeight / triangleHeight * approxRows));
+    
+    const spacing = particlesInRow > 1 ? widthAtHeight / (particlesInRow - 1) : 0;
+    
+    for (let col = 0; col < particlesInRow && particleIndex < globals.numParticles; col++) {
+      const x = globals.boxMin + 0.1 + col * spacing;
       
       positions[particleIndex * 3] = x;
       positions[particleIndex * 3 + 1] = y;
       positions[particleIndex * 3 + 2] = 0;
       
-      // Initialize velocities to zero for stable start
       velocities[particleIndex * 3] = 0;
       velocities[particleIndex * 3 + 1] = 0;
       velocities[particleIndex * 3 + 2] = 0;
       
-      // Initialize density to zero (will be computed)
       densities[particleIndex] = 0;
       
       particleIndex++;
