@@ -85,7 +85,7 @@ export function createView(container: HTMLElement, recordUntil: number | undefin
   return { renderer, camera, scene, particles, clock };
 }
 
-export function drawFrame(view: View, positions: Float32Array, scalars: Float32Array): void {
+export function drawFrame(view: View, positions: Float32Array, scalars: Float32Array, minValue: number, maxValue: number): void {
   const geometry = view.particles.geometry as THREE.BufferGeometry;
 
   const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -95,10 +95,12 @@ export function drawFrame(view: View, positions: Float32Array, scalars: Float32A
   const colorAttr = geometry.getAttribute('color') as THREE.BufferAttribute;
   const colors = colorAttr.array as Float32Array;
 
+  const range = maxValue - minValue;
   let r, g, b;
 
   for (let i = 0; i < scalars.length; i++) {
-    const t = scalars[i];
+    // Normalize scalar to [0, 1] range
+    const t = range > 0 ? Math.max(0, Math.min(1, (scalars[i] - minValue) / range)) : 0;
 
     // [0, 1] -> [cold, hot] color mapping
     if (t < 0.5) {
@@ -110,8 +112,6 @@ export function drawFrame(view: View, positions: Float32Array, scalars: Float32A
       g = 1.0 - t;
       b = 0.0;
     }
-
-    g = 0.3 + 0.7 * g; // Boost green for better visibility
  
     colors[3 * i]     = r;
     colors[3 * i + 1] = g;

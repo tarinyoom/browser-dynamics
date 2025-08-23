@@ -13,5 +13,6 @@ export const globals: CalculationParameters = {
 
 export const debug: DebugParameters = {
   recordUntil: 7000,
-  pauseAfter: 50000
+  pauseAfter: 50000,
+  colorMode: 'density'
 } as const;
