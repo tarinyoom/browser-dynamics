@@ -7,7 +7,7 @@ function createScalarMapper(colorMode: 'pressure' | 'density') {
   switch (colorMode) {
     case 'pressure':
       return (arena: Arena) => {
-        return { scalars: arena.pressures, minValue: 0.0, maxValue: 5.0 };
+        return { scalars: arena.pressures, minValue: 0.0, maxValue: 50.0 };
       };
     case 'density':
       const referenceDensity = 2.0 / (globals.boxMax - globals.boxMin) ** 2;
