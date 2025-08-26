@@ -186,8 +186,6 @@ function accelerateAlongPressureGradient(arena: Arena, i: number, j: number): vo
   const rhoisq = arena.densities[i] * arena.densities[i];
   const rhojsq = arena.densities[j] * arena.densities[j];
 
-  if (rhoisq < 1e-6 || rhojsq < 1e-6) return;
-
   const pi = arena.pressures[i] / rhoisq;
   const pj = arena.pressures[j] / rhojsq;
 
