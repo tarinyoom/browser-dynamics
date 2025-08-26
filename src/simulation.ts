@@ -88,7 +88,7 @@ export function initializeArena(): Arena {
         };
 }
 
-function addDensity(arena: Arena, i: number, j: number): void {
+function addDensity(arena: Arena, i: number, j: number, symm: boolean): void {
     const dx = arena.positions[i * 3] - arena.positions[j * 3];
     const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
     const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
@@ -102,14 +102,17 @@ function addDensity(arena: Arena, i: number, j: number): void {
     const density = kernel(d, arena.invH) * arena.particleMass;
 
     arena.densities[i] += density;
-    arena.densities[j] += density;
+    if (symm) {
+      arena.densities[j] += density;
+    }
 }
 
 function accumulateDensities(arena: Arena, neighbors: number[][]) {
   for (let i = 0; i < neighbors.length; i++) {
     for (const j of neighbors[i]) {
-      addDensity(arena, i, j);
+      addDensity(arena, i, j, true);
     }
+    addDensity(arena, i, i, false);
   }
 }
 
