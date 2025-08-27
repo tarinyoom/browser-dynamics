@@ -2,8 +2,8 @@ import { initializeArena, step } from './simulation';
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug, globals } from './constants';
-import init, { shout, /* memory, etc. */ } from "../crates/hello-world/pkg/hello_wasm.js";
-import wasmUrl from "../crates/hello-world/pkg/hello_wasm_bg.wasm?url"; // <-- key line
+import init, { shout } from "../crates/sph/pkg/sph.js";
+import wasmUrl from "../crates/sph/pkg/sph_bg.wasm?url";
 
 await init(wasmUrl);
 
