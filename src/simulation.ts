@@ -1,6 +1,10 @@
 import { globals } from './constants';
 import { computeGrid, populateGrid, findNeighbors } from './spatial-hash';
 import { kernel, dKernel } from './kernel';
+import init, { shout } from "../crates/sph/pkg/sph.js";
+import wasmUrl from "../crates/sph/pkg/sph_bg.wasm?url";
+
+await init(wasmUrl);
 
 export function initializeArena(): Arena {
   const positions = new Float32Array(globals.numParticles * 3);
@@ -215,6 +219,8 @@ function addMomentum(arena: Arena) {
 }
 
 export function step(arena: Arena) {
+  console.log(shout("step"));
+
   initializeTimestep(arena);
   generateNeighborLists(arena);
 
