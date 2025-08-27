@@ -2,6 +2,12 @@ import { initializeArena, step } from './simulation';
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug, globals } from './constants';
+import init, { shout, /* memory, etc. */ } from "../crates/hello-world/pkg/hello_wasm.js";
+import wasmUrl from "../crates/hello-world/pkg/hello_wasm_bg.wasm?url"; // <-- key line
+
+await init(wasmUrl);
+
+console.log(shout("adam"));
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
   switch (colorMode) {
@@ -47,7 +53,7 @@ function makeAnimation(view: View, arena: Arena) {
   return animation;
 }
 
-function init() {
+(() => {
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
@@ -61,6 +67,4 @@ function init() {
   });
 
   makeAnimation(view, arena)();
-}
-
-init();
+})();

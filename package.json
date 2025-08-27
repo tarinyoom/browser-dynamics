@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "wasm-pack build crates/hello-world --target web --out-dir pkg",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
