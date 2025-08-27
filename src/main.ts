@@ -2,6 +2,10 @@ import { initializeArena, step } from './simulation';
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug, globals } from './constants';
+import init, { arena_len, arena_ptr } from "../crates/sph/pkg/sph.js";
+import wasmUrl from "../crates/sph/pkg/sph_bg.wasm?url";
+
+const wasm = await init(wasmUrl);
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
   switch (colorMode) {
@@ -17,9 +21,19 @@ function createScalarMapper(colorMode: 'pressure' | 'density') {
   }
 }
 
+function makeArenaView(): Float32Array {
+  const ptr = arena_ptr();             // byte offset into wasm memory
+  const len = arena_len();             // number of f32 elements
+  if ((ptr & 3) !== 0) throw new Error("misaligned f32 pointer");
+  return new Float32Array(wasm.memory.buffer, ptr, len);
+}
+
 function makeAnimation(view: View, arena: Arena) {
   const getScalarsAndRange = createScalarMapper(debug.colorMode);
 
+  const ar = makeArenaView();
+  console.log(ar);
+  
   let nFrames = debug.pauseAfter;
   const animation = isDev() ?
     () => {

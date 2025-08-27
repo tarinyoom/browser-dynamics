@@ -1,21 +1,20 @@
 use wasm_bindgen::prelude::*;
 
-// 1) A tiny function
+const N: usize = 3000;
+
+static mut ARENA: [f32; N] = [0.0; N];
+
 #[wasm_bindgen]
-pub fn add(a: i32, b: i32) -> i32 {
-    a + b
+pub fn arena_len() -> usize { N }
+
+#[wasm_bindgen]
+pub fn arena_ptr() -> *const f32 {
+    unsafe { ARENA.as_ptr() }
 }
 
-// 2) Strings cross the boundary via binding glue:
 #[wasm_bindgen]
-pub fn shout(name: &str) -> String {
-    format!("HELLO, {name}!")
-}
-
-// 3) Zero-copy-ish array interop: JS views into wasm memory
-#[wasm_bindgen]
-pub fn sum_f32(ptr: *const f32, len: usize) -> f32 {
-    // Safety: called correctly from JS with a typed array backed by wasm memory.
-    let slice = unsafe { std::slice::from_raw_parts(ptr, len) };
-    slice.iter().copied().sum()
+pub fn fill_arena(v: f32) {
+    unsafe {
+        for x in ARENA.iter_mut() { *x = v; }
+    }
 }
