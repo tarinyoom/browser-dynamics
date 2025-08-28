@@ -57,13 +57,13 @@ function nonZeroViewport() {
 async function boot() {
 
   if (document.visibilityState !== 'visible') {
-    await new Promise(r => document.addEventListener('visibilitychange', function once() {
+    await new Promise<void>(r => document.addEventListener('visibilitychange', function once() {
       if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', once); r(); }
     }));
   }
 
   if (!nonZeroViewport()) {
-    await new Promise(r => {
+    await new Promise<void>(r => {
       const ro = new ResizeObserver(() => { if (nonZeroViewport()) { ro.disconnect(); r(); } });
       ro.observe(document.documentElement);
     });
