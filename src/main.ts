@@ -47,7 +47,28 @@ function makeAnimation(view: View, arena: Arena) {
   return animation;
 }
 
-function init() {
+function nonZeroViewport() {
+  const vv = window.visualViewport;
+  const w = vv ? Math.floor(vv.width) : window.innerWidth;
+  const h = vv ? Math.floor(vv.height) : window.innerHeight;
+  return w > 2 && h > 2;
+}
+
+async function boot() {
+
+  if (document.visibilityState !== 'visible') {
+    await new Promise(r => document.addEventListener('visibilitychange', function once() {
+      if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', once); r(); }
+    }));
+  }
+
+  if (!nonZeroViewport()) {
+    await new Promise(r => {
+      const ro = new ResizeObserver(() => { if (nonZeroViewport()) { ro.disconnect(); r(); } });
+      ro.observe(document.documentElement);
+    });
+  }
+
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
@@ -63,4 +84,4 @@ function init() {
   makeAnimation(view, arena)();
 }
 
-init();
+window.addEventListener('pageshow', boot, { once: true });
