@@ -2,10 +2,8 @@ import { initializeArena, step } from './simulation';
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug, globals } from './constants';
-import init, { arena_len, arena_ptr } from "../crates/sph/pkg/sph.js";
+import init, { arena_len, arena_ptr, InitOutput } from "../crates/sph/pkg/sph.js";
 import wasmUrl from "../crates/sph/pkg/sph_bg.wasm?url";
-
-const wasm = await init(wasmUrl);
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
   switch (colorMode) {
@@ -21,17 +19,17 @@ function createScalarMapper(colorMode: 'pressure' | 'density') {
   }
 }
 
-function makeArenaView(): Float32Array {
+function makeArenaView(wasm: InitOutput): Float32Array {
   const ptr = arena_ptr();             // byte offset into wasm memory
   const len = arena_len();             // number of f32 elements
   if ((ptr & 3) !== 0) throw new Error("misaligned f32 pointer");
   return new Float32Array(wasm.memory.buffer, ptr, len);
 }
 
-function makeAnimation(view: View, arena: Arena) {
+function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
   const getScalarsAndRange = createScalarMapper(debug.colorMode);
 
-  const ar = makeArenaView();
+  const ar = makeArenaView(wasm);
   console.log(ar);
   
   let nFrames = debug.pauseAfter;
@@ -61,7 +59,30 @@ function makeAnimation(view: View, arena: Arena) {
   return animation;
 }
 
-(() => {
+function nonZeroViewport() {
+  const vv = window.visualViewport;
+  const w = vv ? Math.floor(vv.width) : window.innerWidth;
+  const h = vv ? Math.floor(vv.height) : window.innerHeight;
+  return w > 2 && h > 2;
+}
+
+async function boot() {
+
+  if (document.visibilityState !== 'visible') {
+    await new Promise<void>(r => document.addEventListener('visibilitychange', function once() {
+      if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', once); r(); }
+    }));
+  }
+
+  if (!nonZeroViewport()) {
+    await new Promise<void>(r => {
+      const ro = new ResizeObserver(() => { if (nonZeroViewport()) { ro.disconnect(); r(); } });
+      ro.observe(document.documentElement);
+    });
+  }
+
+  const wasm = await init(wasmUrl);
+
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
@@ -74,5 +95,7 @@ function makeAnimation(view: View, arena: Arena) {
     view.renderer.setSize(container.clientWidth, container.clientHeight);
   });
 
-  makeAnimation(view, arena)();
-})();
+  makeAnimation(view, arena, wasm)();
+}
+
+window.addEventListener('pageshow', boot, { once: true });
