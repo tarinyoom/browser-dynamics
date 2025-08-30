@@ -34,29 +34,18 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
   console.log(ar);
   
   let nFrames = debug.pauseAfter;
-  const animation = isDev() ?
-    () => {
-      try {
-        if (nFrames-- > 0) {
-          const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
-          drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
-          step(arena);
-          requestAnimationFrame(animation);
-        }
-      } catch (err) {
-        console.error("Animation stopped due to error:", err);
-      }
-    } :
-    () => {
-      try {
-        const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
-        drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
-        step(arena);
-        requestAnimationFrame(animation);
-      } catch (err) {
-        console.error("Animation stopped due to error:", err);
-      }
-    };
+  const animation = () => {
+    try {
+      if (isDev() && nFrames-- <= 0) return;
+      
+      const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
+      drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
+      step(arena);
+      requestAnimationFrame(animation);
+    } catch (err) {
+      console.error("Animation stopped due to error:", err);
+    }
+  };
   return animation;
 }
 
