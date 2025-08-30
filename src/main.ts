@@ -2,7 +2,7 @@ import { initializeArena, step } from './simulation';
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug, globals } from './constants';
-import init, { arena_len, arena_ptr, InitOutput } from "../crates/sph/pkg/sph.js";
+import init, { arena_len, arena_ptr, InitOutput, fill_arena } from "../crates/sph/pkg/sph.js";
 import wasmUrl from "../crates/sph/pkg/sph_bg.wasm?url";
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
@@ -30,6 +30,7 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
   const getScalarsAndRange = createScalarMapper(debug.colorMode);
 
   const ar = makeArenaView(wasm);
+  fill_arena();
   console.log(ar);
   
   let nFrames = debug.pauseAfter;

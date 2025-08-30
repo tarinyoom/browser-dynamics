@@ -14,7 +14,7 @@ pub fn arena_ptr() -> *const f32 {
 }
 
 #[wasm_bindgen]
-pub fn fill_arena(v: f32) {
+pub fn fill_arena() {
     let box_min = -1.6f32;
     let box_max = 1.6f32;
     let domain_width = box_max - box_min;
