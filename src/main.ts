@@ -30,7 +30,7 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
   const wasm_z = new Float32Array(wasm.memory.buffer, ptr + globals.numParticles * 8, globals.numParticles);
   
   fill_arena();
-  console.log(wasm_x, wasm_y, wasm_z);
+  console.log(debug.backendMode === 'wasm' ? [wasm_x, wasm_y, wasm_z] : [arena.px, arena.py, arena.pz]);
   
   let nFrames = debug.pauseAfter;
   const animation = () => {
@@ -38,8 +38,12 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
       if (isDev() && nFrames-- <= 0) return;
       
       const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
-      drawFrame(view, wasm_x, wasm_y, wasm_z, scalars, minValue, maxValue);
-      step(arena);
+      if (debug.backendMode === 'wasm') {
+        drawFrame(view, wasm_x, wasm_y, wasm_z, scalars, minValue, maxValue);
+      } else {
+        drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
+        step(arena);
+      }
       requestAnimationFrame(animation);
     } catch (err) {
       console.error("Animation stopped due to error:", err);

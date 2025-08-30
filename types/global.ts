@@ -56,6 +56,7 @@ declare global {
     recordUntil: number;
     pauseAfter: number;
     colorMode: 'pressure' | 'density';
+    backendMode: 'js' | 'wasm';
   }
 
   interface View {
