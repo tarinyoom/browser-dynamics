@@ -3,10 +3,18 @@ import { computeGrid, populateGrid, findNeighbors } from './spatial-hash';
 import { kernel, dKernel } from './kernel';
 
 export function initializeArena(): Arena {
-  const positions = new Float32Array(globals.numParticles * 3);
-  const velocities = new Float32Array(globals.numParticles * 3);
-  const acceleration = new Float32Array(globals.numParticles * 3);
-  const preAcceleration = new Float32Array(globals.numParticles * 3);
+  const px = new Float32Array(globals.numParticles);
+  const py = new Float32Array(globals.numParticles);
+  const pz = new Float32Array(globals.numParticles);
+  const vx = new Float32Array(globals.numParticles);
+  const vy = new Float32Array(globals.numParticles);
+  const vz = new Float32Array(globals.numParticles);
+  const ax = new Float32Array(globals.numParticles);
+  const ay = new Float32Array(globals.numParticles);
+  const az = new Float32Array(globals.numParticles);
+  const aax = new Float32Array(globals.numParticles);
+  const aay = new Float32Array(globals.numParticles);
+  const aaz = new Float32Array(globals.numParticles);
   const densities = new Float32Array(globals.numParticles);
   const pressures = new Float32Array(globals.numParticles);
   const extents = [[globals.boxMin, globals.boxMax], [globals.boxMin, globals.boxMax], [0.0, 0.0]];
@@ -56,13 +64,13 @@ export function initializeArena(): Arena {
     for (let col = 0; col < particlesInRow && particleIndex < globals.numParticles; col++) {
       const x = globals.boxMin + 0.1 + col * spacing;
       
-      positions[particleIndex * 3] = x;
-      positions[particleIndex * 3 + 1] = y;
-      positions[particleIndex * 3 + 2] = 0;
+      px[particleIndex] = x;
+      py[particleIndex] = y;
+      pz[particleIndex] = 0;
       
-      velocities[particleIndex * 3] = 0;
-      velocities[particleIndex * 3 + 1] = 0;
-      velocities[particleIndex * 3 + 2] = 0;
+      vx[particleIndex] = 0;
+      vy[particleIndex] = 0;
+      vz[particleIndex] = 0;
       
       densities[particleIndex] = 0;
       
@@ -70,10 +78,18 @@ export function initializeArena(): Arena {
     }
   }
 
-  return { positions: positions,
-           velocities: velocities,
-           acceleration: acceleration,
-           preAcceleration: preAcceleration,
+  return { px: px,
+           py: py,
+           pz: pz,
+           vx: vx,
+           vy: vy,
+           vz: vz,
+           ax: ax,
+           ay: ay,
+           az: az,
+           aax: aax,
+           aay: aay,
+           aaz: aaz,
            densities: densities,
            pressures: pressures,
            grid: grid,
@@ -89,9 +105,9 @@ export function initializeArena(): Arena {
 }
 
 function addDensity(arena: Arena, i: number, j: number, symm: boolean): void {
-    const dx = arena.positions[i * 3] - arena.positions[j * 3];
-    const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
-    const dz = arena.positions[i * 3 + 2] - arena.positions[j * 3 + 2];
+    const dx = arena.px[i] - arena.px[j];
+    const dy = arena.py[i] - arena.py[j];
+    const dz = arena.pz[i] - arena.pz[j];
 
     const r2 = dx * dx + dy * dy + dz * dz;
 
@@ -125,11 +141,15 @@ function computePressures(arena: Arena) {
 }
 
 function initializeTimestep(arena: Arena) {
-  populateGrid(arena.positions, arena.grid, arena.cellContents, arena.pointToCell, globals.numParticles, arena.invH);
+  populateGrid(arena.px, arena.py, arena.pz, arena.grid, arena.cellContents, arena.pointToCell, globals.numParticles, arena.invH);
 
-  for (let i = 0; i < globals.numParticles * 3; i++) {
-    arena.preAcceleration[i] = arena.acceleration[i];
-    arena.acceleration[i] = 0;
+  for (let i = 0; i < globals.numParticles; i++) {
+    arena.aax[i] = arena.ax[i];
+    arena.aay[i] = arena.ay[i];
+    arena.aaz[i] = arena.az[i];
+    arena.ax[i] = 0;
+    arena.ay[i] = 0;
+    arena.az[i] = 0;
   }
 
   for (let i = 0; i < globals.numParticles; i++) {
@@ -143,26 +163,39 @@ function generateNeighborLists(arena: Arena) {
 
 function leapfrog(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {    
-    arena.positions[i * 3] += arena.velocities[i * 3] * globals.timestep + 0.5 * arena.preAcceleration[i * 3] * globals.timestep * globals.timestep;
-    arena.positions[i * 3 + 1] += arena.velocities[i * 3 + 1] * globals.timestep + 0.5 * arena.preAcceleration[i * 3 + 1] * globals.timestep * globals.timestep;
+    arena.px[i] += arena.vx[i] * globals.timestep + 0.5 * arena.aax[i] * globals.timestep * globals.timestep;
+    arena.py[i] += arena.vy[i] * globals.timestep + 0.5 * arena.aay[i] * globals.timestep * globals.timestep;
     
-    arena.velocities[i * 3] += 0.5 * (arena.preAcceleration[i * 3] + arena.acceleration[i * 3]) * globals.timestep;
-    arena.velocities[i * 3 + 1] += 0.5 * (arena.preAcceleration[i * 3 + 1] + arena.acceleration[i * 3 + 1]) * globals.timestep;
+    arena.vx[i] += 0.5 * (arena.aax[i] + arena.ax[i]) * globals.timestep;
+    arena.vy[i] += 0.5 * (arena.aay[i] + arena.ay[i]) * globals.timestep;
   }
 }
 
 function reflect(arena: Arena) {
   for (let i = 0; i < globals.numParticles; i++) {
-    const pos = arena.positions.subarray(i * 3, (i + 1) * 3);
-    const vel = arena.velocities.subarray(i * 3, (i + 1) * 3);
-
-    for (let j = 0; j < globals.dim; j++) {
-      if (pos[j] < globals.boxMin) {
-        pos[j] = globals.boxMin;
-        vel[j] *= -1;
-      } else if (pos[j] > globals.boxMax) {
-        pos[j] = globals.boxMax;
-        vel[j] *= -1;
+    if (arena.px[i] < globals.boxMin) {
+      arena.px[i] = globals.boxMin;
+      arena.vx[i] *= -1;
+    } else if (arena.px[i] > globals.boxMax) {
+      arena.px[i] = globals.boxMax;
+      arena.vx[i] *= -1;
+    }
+    
+    if (arena.py[i] < globals.boxMin) {
+      arena.py[i] = globals.boxMin;
+      arena.vy[i] *= -1;
+    } else if (arena.py[i] > globals.boxMax) {
+      arena.py[i] = globals.boxMax;
+      arena.vy[i] *= -1;
+    }
+    
+    if (globals.dim > 2) {
+      if (arena.pz[i] < globals.boxMin) {
+        arena.pz[i] = globals.boxMin;
+        arena.vz[i] *= -1;
+      } else if (arena.pz[i] > globals.boxMax) {
+        arena.pz[i] = globals.boxMax;
+        arena.vz[i] *= -1;
       }
     }
   }
@@ -171,8 +204,8 @@ function reflect(arena: Arena) {
 function accelerateAlongPressureGradient(arena: Arena, i: number, j: number): void {
   if (arena.densities[i] <= 0 || arena.densities[j] <= 0) return;
 
-  const dx = arena.positions[i * 3] - arena.positions[j * 3];
-  const dy = arena.positions[i * 3 + 1] - arena.positions[j * 3 + 1];
+  const dx = arena.px[i] - arena.px[j];
+  const dy = arena.py[i] - arena.py[j];
 
   const r2 = dx * dx + dy * dy;
 
@@ -199,11 +232,11 @@ function accelerateAlongPressureGradient(arena: Arena, i: number, j: number): vo
   const ax = dx_normed * scale;
   const ay = dy_normed * scale;
 
-  arena.acceleration[i * 3] -= ax;
-  arena.acceleration[i * 3 + 1] -= ay;
+  arena.ax[i] -= ax;
+  arena.ay[i] -= ay;
 
-  arena.acceleration[j * 3] += ax;
-  arena.acceleration[j * 3 + 1] += ay;
+  arena.ax[j] += ax;
+  arena.ay[j] += ay;
 }
 
 function addMomentum(arena: Arena) {
@@ -222,7 +255,7 @@ export function step(arena: Arena) {
   computePressures(arena);
 
   for (let i = 0; i < globals.numParticles; i++) {
-    arena.acceleration[i * 3 + 1] += globals.gravity;
+    arena.ay[i] += globals.gravity;
   }
 
   addMomentum(arena);

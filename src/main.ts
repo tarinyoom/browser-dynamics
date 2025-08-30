@@ -39,7 +39,7 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
       try {
         if (nFrames-- > 0) {
           const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
-          drawFrame(view, arena.positions, scalars, minValue, maxValue);
+          drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
           step(arena);
           requestAnimationFrame(animation);
         }
@@ -50,7 +50,7 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
     () => {
       try {
         const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
-        drawFrame(view, arena.positions, scalars, minValue, maxValue);
+        drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
         step(arena);
         requestAnimationFrame(animation);
       } catch (err) {
