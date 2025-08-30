@@ -2,7 +2,7 @@ import { initializeArena, step } from './simulation';
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug, globals } from './constants';
-import init, { arena_len, arena_ptr, InitOutput, fill_arena } from "../crates/sph/pkg/sph.js";
+import init, { arena_ptr, InitOutput, fill_arena } from "../crates/sph/pkg/sph.js";
 import wasmUrl from "../crates/sph/pkg/sph_bg.wasm?url";
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
@@ -19,19 +19,18 @@ function createScalarMapper(colorMode: 'pressure' | 'density') {
   }
 }
 
-function makeArenaView(wasm: InitOutput): Float32Array {
-  const ptr = arena_ptr();             // byte offset into wasm memory
-  const len = arena_len();             // number of f32 elements
-  if ((ptr & 3) !== 0) throw new Error("misaligned f32 pointer");
-  return new Float32Array(wasm.memory.buffer, ptr, len);
-}
-
 function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
   const getScalarsAndRange = createScalarMapper(debug.colorMode);
 
-  const ar = makeArenaView(wasm);
+  const ptr = arena_ptr();             // byte offset into wasm memory
+  if ((ptr & 3) !== 0) throw new Error("misaligned f32 pointer");
+  
+  const wasm_x = new Float32Array(wasm.memory.buffer, ptr, globals.numParticles);
+  const wasm_y = new Float32Array(wasm.memory.buffer, ptr + globals.numParticles * 4, globals.numParticles);
+  const wasm_z = new Float32Array(wasm.memory.buffer, ptr + globals.numParticles * 8, globals.numParticles);
+  
   fill_arena();
-  console.log(ar);
+  console.log(wasm_x, wasm_y, wasm_z);
   
   let nFrames = debug.pauseAfter;
   const animation = () => {
@@ -39,7 +38,7 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
       if (isDev() && nFrames-- <= 0) return;
       
       const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
-      drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
+      drawFrame(view, wasm_x, wasm_y, wasm_z, scalars, minValue, maxValue);
       step(arena);
       requestAnimationFrame(animation);
     } catch (err) {

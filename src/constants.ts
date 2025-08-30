@@ -1,7 +1,7 @@
 export const globals: CalculationParameters = {
   timestep: 1/2000,
   maxTimestepsPerFrame: 5,
-  numParticles: 1500,
+  numParticles: 1000,
   smoothingRadius: 0.3,
   dim: 2,
   boxMin: -1.6,
