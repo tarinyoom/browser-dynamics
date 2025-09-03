@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+pub mod spatial_hash;
+
 const N: usize = 1000;
 const ARENA_SIZE: usize = N * 14;
 
