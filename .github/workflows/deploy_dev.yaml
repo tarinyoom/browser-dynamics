@@ -41,6 +41,8 @@ jobs:
         run: npm install -g wrangler
 
       - name: Deploy to Cloudflare Pages
-        run: wrangler pages deploy dist --project-name=sph-dev
+        run: wrangler pages deploy dist \
+              --project-name=sph-dev \
+              --branch=main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
