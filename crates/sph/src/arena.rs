@@ -1,5 +1,4 @@
-const N: usize = 1000;
-const ARENA_SIZE: usize = N * 14;
+use crate::constants::{N, ARENA_SIZE};
 
 static mut ARENA: [f32; ARENA_SIZE] = [0.0; ARENA_SIZE];
 

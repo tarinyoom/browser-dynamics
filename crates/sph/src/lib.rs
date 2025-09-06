@@ -4,6 +4,7 @@ pub mod spatial_hash;
 pub mod kernel;
 pub mod arena;
 pub mod initial_conditions;
+pub mod constants;
 
 #[wasm_bindgen]
 pub fn arena_len() -> usize { 

@@ -1,6 +1,5 @@
 use crate::arena::*;
-
-const N: usize = 1000;
+use crate::constants::N;
 
 pub fn fill_arena() {
     let box_min = -1.6f32;
