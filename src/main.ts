@@ -2,7 +2,7 @@ import { initializeArena, step } from './simulation';
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug, globals } from './constants';
-import init, { arena_ptr, InitOutput, fill_arena } from "../crates/sph/pkg/sph.js";
+import init, { arena_ptr, InitOutput, fill_arena, update } from "../crates/sph/pkg/sph.js";
 import wasmUrl from "../crates/sph/pkg/sph_bg.wasm?url";
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
@@ -39,6 +39,7 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
       
       const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
       if (debug.backendMode === 'wasm') {
+        update();
         drawFrame(view, wasm_x, wasm_y, wasm_z, scalars, minValue, maxValue);
       } else {
         drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
