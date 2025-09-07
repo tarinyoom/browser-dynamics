@@ -28,9 +28,11 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
   const wasm_x = new Float32Array(wasm.memory.buffer, ptr, globals.numParticles);
   const wasm_y = new Float32Array(wasm.memory.buffer, ptr + globals.numParticles * 4, globals.numParticles);
   const wasm_z = new Float32Array(wasm.memory.buffer, ptr + globals.numParticles * 8, globals.numParticles);
+  const wasm_rho = new Float32Array(wasm.memory.buffer, ptr + globals.numParticles * 48, globals.numParticles);
   
   fill_arena();
   console.log(debug.backendMode === 'wasm' ? [wasm_x, wasm_y, wasm_z] : [arena.px, arena.py, arena.pz]);
+  console.log(wasm_rho);
   
   let nFrames = debug.pauseAfter;
   const animation = () => {
@@ -40,7 +42,7 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
       const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
       if (debug.backendMode === 'wasm') {
         update();
-        drawFrame(view, wasm_x, wasm_y, wasm_z, scalars, minValue, maxValue);
+        drawFrame(view, wasm_x, wasm_y, wasm_z, wasm_rho, 0.0, 10.0);
       } else {
         drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
         step(arena);

@@ -26,6 +26,13 @@ fn initialize_timestep() {
     }
 }
 
+fn add_densities() {
+    let densities = rho();
+    for i in 0..N {
+        densities[i] += 2.1;
+    }
+}
+
 fn leapfrog() {
     let px = x();
     let py = y();
@@ -89,7 +96,8 @@ fn reflect() {
 
 pub fn update() {
     initialize_timestep();
-    
+    add_densities();
+
     // Add gravity to accelerations
     let ay_slice = ay();
     for i in 0..N {
