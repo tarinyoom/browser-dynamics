@@ -1,7 +1,7 @@
 use crate::constants::{GLOBALS, N};
 use crate::state::State;
 use crate::spatial_hash::{populate_grid, find_neighbors};
-use crate::kernel::kernel;
+use crate::kernel::{kernel, d_kernel};
 
 fn initialize_timestep(state: &mut State) {
     // Populate the spatial grid for neighbor finding
@@ -74,6 +74,68 @@ fn add_densities(state: &mut State) {
     }
 }
 
+fn compute_pressures(state: &mut State) {
+    for i in 0..N {
+        let density = state.rho[i];
+        let pressure = state.tait_b * ((density * state.inv_reference_density).powf(GLOBALS.tait_gamma as f32) - 1.0);
+        state.p[i] = pressure;
+    }
+}
+
+fn accelerate_along_pressure_gradient(state: &mut State, i: usize, j: usize) {
+    if state.rho[i] <= 0.0 || state.rho[j] <= 0.0 {
+        return;
+    }
+
+    let dx = state.x[i] - state.x[j];
+    let dy = state.y[i] - state.y[j];
+
+    let r2 = dx * dx + dy * dy;
+
+    let smoothing_radius = GLOBALS.smoothing_radius as f32;
+    if r2 > smoothing_radius * smoothing_radius {
+        return;
+    }
+
+    let d = r2.sqrt();
+
+    if d < 0.2 * smoothing_radius {
+        return;
+    }
+
+    let rho_i_sq = state.rho[i] * state.rho[i];
+    let rho_j_sq = state.rho[j] * state.rho[j];
+
+    let pi = state.p[i] / rho_i_sq;
+    let pj = state.p[j] / rho_j_sq;
+
+    let inv_d = 1.0 / d;
+
+    let dx_normed = dx * inv_d;
+    let dy_normed = dy * inv_d;
+
+    let scale = d_kernel(d as f64, state.inv_h as f64) as f32 * (pi + pj) * state.particle_mass;
+
+    let ax = dx_normed * scale;
+    let ay = dy_normed * scale;
+
+    state.ax[i] -= ax;
+    state.ay[i] -= ay;
+
+    state.ax[j] += ax;
+    state.ay[j] += ay;
+}
+
+fn add_momentum(state: &mut State) {
+    for i in 0..N {
+        let neighbor_count = state.neighbors[i].len();
+        for j_idx in 0..neighbor_count {
+            let j = state.neighbors[i][j_idx];
+            accelerate_along_pressure_gradient(state, i, j);
+        }
+    }
+}
+
 fn leapfrog(state: &mut State) {
     let dt = GLOBALS.timestep as f32;
     
@@ -137,11 +199,14 @@ fn reflect(state: &mut State) {
 pub fn update(state: &mut State) {
     initialize_timestep(state);
     add_densities(state);
+    compute_pressures(state);
 
     // Add gravity to accelerations
     for i in 0..N {
         state.ay[i] += GLOBALS.gravity as f32;
     }
+    
+    add_momentum(state);
     
     reflect(state);
     leapfrog(state);
