@@ -25,12 +25,6 @@ pub fn arena_ptr() -> *const f32 {
 }
 
 #[wasm_bindgen]
-pub fn fill_arena() {
-    let mut arena_guard = get_arena().lock().unwrap();
-    initial_conditions::fill_arena(&mut *arena_guard);
-}
-
-#[wasm_bindgen]
 pub fn update() {
     let mut arena_guard = get_arena().lock().unwrap();
     simulation::update(&mut *arena_guard);

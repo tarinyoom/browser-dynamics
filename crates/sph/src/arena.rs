@@ -1,4 +1,5 @@
 use crate::constants::{N, ARENA_SIZE};
+use crate::initial_conditions::fill_arena;
 
 pub struct Arena {
     data: [f32; ARENA_SIZE],
@@ -6,9 +7,11 @@ pub struct Arena {
 
 impl Arena {
     pub fn new() -> Self {
-        Arena {
+        let mut arena = Arena {
             data: [0.0; ARENA_SIZE],
-        }
+        };
+        fill_arena(&mut arena);
+        arena
     }
 
     pub fn len(&self) -> usize { 
