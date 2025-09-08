@@ -1,7 +1,24 @@
 use crate::constants::{GLOBALS, N};
 use crate::state::State;
+use crate::spatial_hash::{populate_grid, find_neighbors};
+use crate::kernel::kernel;
 
 fn initialize_timestep(state: &mut State) {
+    // Populate the spatial grid for neighbor finding
+    populate_grid(
+        &state.x,
+        &state.y,
+        &state.z,
+        &state.grid,
+        &mut state.cell_contents,
+        &mut state.point_to_cell,
+        N,
+        state.inv_h,
+    );
+    
+    // Find neighbors based on the populated grid
+    find_neighbors(&state.grid, &state.cell_contents, &mut state.neighbors);
+    
     // Store previous accelerations and reset current ones
     for i in 0..N {
         let ax_prev_val = state.ax[i];
@@ -23,9 +40,37 @@ fn initialize_timestep(state: &mut State) {
     }
 }
 
+fn add_density(state: &mut State, i: usize, j: usize, symm: bool) {
+    let dx = state.x[i] - state.x[j];
+    let dy = state.y[i] - state.y[j];
+    let dz = state.z[i] - state.z[j];
+
+    let r2 = dx * dx + dy * dy + dz * dz;
+
+    let smoothing_radius = GLOBALS.smoothing_radius as f32;
+    if r2 > smoothing_radius * smoothing_radius {
+        return;
+    }
+
+    let d = r2.sqrt();
+    let density = kernel(d as f64, state.inv_h as f64) as f32 * state.particle_mass;
+
+    state.rho[i] += density;
+    if symm {
+        state.rho[j] += density;
+    }
+}
+
 fn add_densities(state: &mut State) {
+    // Accumulate densities using neighbors (following TypeScript accumulateDensities)
     for i in 0..N {
-        state.rho[i] += 2.1;
+        let neighbor_count = state.neighbors[i].len();
+        for j_idx in 0..neighbor_count {
+            let j = state.neighbors[i][j_idx];
+            add_density(state, i, j, true);
+        }
+        // Self contribution
+        add_density(state, i, i, false);
     }
 }
 

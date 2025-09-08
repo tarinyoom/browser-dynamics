@@ -56,6 +56,7 @@ pub fn populate_grid(
         contents[cell_index].push(i);
         grid_map[i] = cell_index;
     }
+
 }
 
 pub fn find_neighbors(
