@@ -1,14 +1,33 @@
 use crate::constants::{N, ARENA_SIZE};
 use crate::initial_conditions::fill_arena;
+use crate::spatial_hash::Grid;
 
 pub struct Arena {
     data: [f32; ARENA_SIZE],
+    grid: Grid,
+    cell_contents: Vec<Vec<usize>>,
+    point_to_cell: Vec<usize>,
+    neighbors: Vec<Vec<usize>>,
+    particle_mass: f32,
+    inv_h: f32,
+    neighbor_offsets: Vec<usize>,
+    inv_reference_density: f32,
+    tait_b: f32,
 }
 
 impl Arena {
     pub fn new() -> Self {
         let mut arena = Arena {
             data: [0.0; ARENA_SIZE],
+            grid: Grid { count: Vec::new(), offset: Vec::new() },
+            cell_contents: Vec::new(),
+            point_to_cell: vec![0; N],
+            neighbors: vec![Vec::new(); N],
+            particle_mass: 0.0,
+            inv_h: 0.0,
+            neighbor_offsets: Vec::new(),
+            inv_reference_density: 0.0,
+            tait_b: 0.0,
         };
         fill_arena(&mut arena);
         arena
@@ -76,5 +95,77 @@ impl Arena {
 
     pub fn p(&mut self) -> &mut [f32] {
         &mut self.data[13 * N..(13 * N) + N]
+    }
+
+    pub fn grid(&self) -> &Grid {
+        &self.grid
+    }
+
+    pub fn grid_mut(&mut self) -> &mut Grid {
+        &mut self.grid
+    }
+
+    pub fn cell_contents(&self) -> &Vec<Vec<usize>> {
+        &self.cell_contents
+    }
+
+    pub fn cell_contents_mut(&mut self) -> &mut Vec<Vec<usize>> {
+        &mut self.cell_contents
+    }
+
+    pub fn point_to_cell(&self) -> &Vec<usize> {
+        &self.point_to_cell
+    }
+
+    pub fn point_to_cell_mut(&mut self) -> &mut Vec<usize> {
+        &mut self.point_to_cell
+    }
+
+    pub fn neighbors(&self) -> &Vec<Vec<usize>> {
+        &self.neighbors
+    }
+
+    pub fn neighbors_mut(&mut self) -> &mut Vec<Vec<usize>> {
+        &mut self.neighbors
+    }
+
+    pub fn particle_mass(&self) -> f32 {
+        self.particle_mass
+    }
+
+    pub fn set_particle_mass(&mut self, mass: f32) {
+        self.particle_mass = mass;
+    }
+
+    pub fn inv_h(&self) -> f32 {
+        self.inv_h
+    }
+
+    pub fn set_inv_h(&mut self, inv_h: f32) {
+        self.inv_h = inv_h;
+    }
+
+    pub fn neighbor_offsets(&self) -> &Vec<usize> {
+        &self.neighbor_offsets
+    }
+
+    pub fn neighbor_offsets_mut(&mut self) -> &mut Vec<usize> {
+        &mut self.neighbor_offsets
+    }
+
+    pub fn inv_reference_density(&self) -> f32 {
+        self.inv_reference_density
+    }
+
+    pub fn set_inv_reference_density(&mut self, inv_ref_density: f32) {
+        self.inv_reference_density = inv_ref_density;
+    }
+
+    pub fn tait_b(&self) -> f32 {
+        self.tait_b
+    }
+
+    pub fn set_tait_b(&mut self, tait_b: f32) {
+        self.tait_b = tait_b;
     }
 }
