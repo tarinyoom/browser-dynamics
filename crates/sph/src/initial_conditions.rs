@@ -1,8 +1,8 @@
-use crate::arena::Arena;
+use crate::state::State;
 use crate::constants::{N, GLOBALS};
 use crate::spatial_hash::compute_grid;
 
-pub fn fill_arena(arena: &mut Arena) {
+pub fn fill_state(state: &mut State) {
     // Initialize grid structure
     let extents = [
         &[GLOBALS.box_min as f32, GLOBALS.box_max as f32],
@@ -13,28 +13,28 @@ pub fn fill_arena(arena: &mut Arena) {
     let n_cells = grid.count.iter().product();
     
     // Initialize collections
-    *arena.grid_mut() = grid;
-    *arena.cell_contents_mut() = vec![Vec::new(); n_cells];
-    *arena.point_to_cell_mut() = vec![0; N];
-    *arena.neighbors_mut() = vec![Vec::new(); N];
+    state.grid = grid;
+    state.cell_contents = vec![Vec::new(); n_cells];
+    state.point_to_cell = vec![0; N];
+    state.neighbors = vec![Vec::new(); N];
     
     // Initialize scalar values
-    arena.set_particle_mass(1.0 / N as f32);
-    arena.set_inv_h(1.0 / GLOBALS.smoothing_radius as f32);
+    state.particle_mass = 1.0 / N as f32;
+    state.inv_h = 1.0 / GLOBALS.smoothing_radius as f32;
     
     let reference_density = 2.0 / (GLOBALS.box_max - GLOBALS.box_min).powi(2);
-    arena.set_inv_reference_density(1.0 / reference_density as f32);
-    arena.set_tait_b((reference_density * GLOBALS.tait_c * GLOBALS.tait_c / GLOBALS.tait_gamma) as f32);
+    state.inv_reference_density = 1.0 / reference_density as f32;
+    state.tait_b = (reference_density * GLOBALS.tait_c * GLOBALS.tait_c / GLOBALS.tait_gamma) as f32;
     
     // Initialize neighbor offsets
     let mut neighbor_offsets = Vec::new();
     for dx in -1..=1 {
         for dy in -1..=1 {
-            let offset = (dx + dy * arena.grid().count[0] as i32) as usize;
+            let offset = (dx + dy * state.grid.count[0] as i32) as usize;
             neighbor_offsets.push(offset);
         }
     }
-    *arena.neighbor_offsets_mut() = neighbor_offsets;
+    state.neighbor_offsets = neighbor_offsets;
 
     // Initialize particle positions (triangle layout)
     let domain_width = GLOBALS.box_max - GLOBALS.box_min;
@@ -69,26 +69,26 @@ pub fn fill_arena(arena: &mut Arena) {
             let x = GLOBALS.box_min + 0.1 + col as f64 * spacing;
             
             // Set positions
-            arena.x()[particle_index] = x as f32;
-            arena.y()[particle_index] = y as f32;
-            arena.z()[particle_index] = 0.0;
+            state.x[particle_index] = x as f32;
+            state.y[particle_index] = y as f32;
+            state.z[particle_index] = 0.0;
             
             // Set velocities to zero
-            arena.vx()[particle_index] = 0.0;
-            arena.vy()[particle_index] = 0.0;
-            arena.vz()[particle_index] = 0.0;
+            state.vx[particle_index] = 0.0;
+            state.vy[particle_index] = 0.0;
+            state.vz[particle_index] = 0.0;
             
             // Set accelerations to zero
-            arena.ax()[particle_index] = 0.0;
-            arena.ay()[particle_index] = 0.0;
-            arena.az()[particle_index] = 0.0;
-            arena.ax_()[particle_index] = 0.0;
-            arena.ay_()[particle_index] = 0.0;
-            arena.az_()[particle_index] = 0.0;
+            state.ax[particle_index] = 0.0;
+            state.ay[particle_index] = 0.0;
+            state.az[particle_index] = 0.0;
+            state.ax_[particle_index] = 0.0;
+            state.ay_[particle_index] = 0.0;
+            state.az_[particle_index] = 0.0;
             
             // Set density and pressure to zero
-            arena.rho()[particle_index] = 0.0;
-            arena.p()[particle_index] = 0.0;
+            state.rho[particle_index] = 0.0;
+            state.p[particle_index] = 0.0;
             
             particle_index += 1;
         }
