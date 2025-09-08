@@ -1,109 +1,103 @@
 use crate::constants::{GLOBALS, N};
-use crate::arena::{x, y, z, vx, vy, vz, ax, ay, az, ax_, ay_, az_, rho};
+use crate::arena::Arena;
 
-fn initialize_timestep() {
-    let ax_slice = ax();
-    let ay_slice = ay();
-    let az_slice = az();
-    let ax_prev = ax_();
-    let ay_prev = ay_();
-    let az_prev = az_();
-    let densities = rho();
-    
+fn initialize_timestep(arena: &mut Arena) {
     // Store previous accelerations and reset current ones
     for i in 0..N {
-        ax_prev[i] = ax_slice[i];
-        ay_prev[i] = ay_slice[i];
-        az_prev[i] = az_slice[i];
-        ax_slice[i] = 0.0;
-        ay_slice[i] = 0.0;
-        az_slice[i] = 0.0;
+        let ax_prev_val = { arena.ax()[i] };
+        let ay_prev_val = { arena.ay()[i] };
+        let az_prev_val = { arena.az()[i] };
+        
+        { arena.ax_()[i] = ax_prev_val; }
+        { arena.ay_()[i] = ay_prev_val; }
+        { arena.az_()[i] = az_prev_val; }
+        
+        { arena.ax()[i] = 0.0; }
+        { arena.ay()[i] = 0.0; }
+        { arena.az()[i] = 0.0; }
     }
     
     // Reset densities
     for i in 0..N {
-        densities[i] = 0.0;
+        arena.rho()[i] = 0.0;
     }
 }
 
-fn add_densities() {
-    let densities = rho();
+fn add_densities(arena: &mut Arena) {
     for i in 0..N {
-        densities[i] += 2.1;
+        arena.rho()[i] += 2.1;
     }
 }
 
-fn leapfrog() {
-    let px = x();
-    let py = y();
-    let vx_slice = vx();
-    let vy_slice = vy();
-    let ax_slice = ax();
-    let ay_slice = ay();
-    let ax_prev = ax_();
-    let ay_prev = ay_();
-    
+fn leapfrog(arena: &mut Arena) {
     let dt = GLOBALS.timestep as f32;
     
     for i in 0..N {
-        px[i] += vx_slice[i] * dt + 0.5 * ax_prev[i] * dt * dt;
-        py[i] += vy_slice[i] * dt + 0.5 * ay_prev[i] * dt * dt;
+        let vx_val = { arena.vx()[i] };
+        let vy_val = { arena.vy()[i] };
+        let ax_prev_val = { arena.ax_()[i] };
+        let ay_prev_val = { arena.ay_()[i] };
         
-        vx_slice[i] += 0.5 * (ax_prev[i] + ax_slice[i]) * dt;
-        vy_slice[i] += 0.5 * (ay_prev[i] + ay_slice[i]) * dt;
+        { arena.x()[i] += vx_val * dt + 0.5 * ax_prev_val * dt * dt; }
+        { arena.y()[i] += vy_val * dt + 0.5 * ay_prev_val * dt * dt; }
+        
+        let ax_val = { arena.ax()[i] };
+        let ay_val = { arena.ay()[i] };
+        
+        { arena.vx()[i] += 0.5 * (ax_prev_val + ax_val) * dt; }
+        { arena.vy()[i] += 0.5 * (ay_prev_val + ay_val) * dt; }
     }
 }
 
-fn reflect() {
-    let px = x();
-    let py = y();
-    let pz = z();
-    let vx_slice = vx();
-    let vy_slice = vy();
-    let vz_slice = vz();
-    
+fn reflect(arena: &mut Arena) {
     let box_min = GLOBALS.box_min as f32;
     let box_max = GLOBALS.box_max as f32;
     
     for i in 0..N {
-        if px[i] < box_min {
-            px[i] = box_min;
-            vx_slice[i] *= -1.0;
-        } else if px[i] > box_max {
-            px[i] = box_max;
-            vx_slice[i] *= -1.0;
+        {
+            let px_val = arena.x()[i];
+            if px_val < box_min {
+                arena.x()[i] = box_min;
+                arena.vx()[i] *= -1.0;
+            } else if px_val > box_max {
+                arena.x()[i] = box_max;
+                arena.vx()[i] *= -1.0;
+            }
         }
         
-        if py[i] < box_min {
-            py[i] = box_min;
-            vy_slice[i] *= -1.0;
-        } else if py[i] > box_max {
-            py[i] = box_max;
-            vy_slice[i] *= -1.0;
+        {
+            let py_val = arena.y()[i];
+            if py_val < box_min {
+                arena.y()[i] = box_min;
+                arena.vy()[i] *= -1.0;
+            } else if py_val > box_max {
+                arena.y()[i] = box_max;
+                arena.vy()[i] *= -1.0;
+            }
         }
         
         if GLOBALS.dim > 2 {
-            if pz[i] < box_min {
-                pz[i] = box_min;
-                vz_slice[i] *= -1.0;
-            } else if pz[i] > box_max {
-                pz[i] = box_max;
-                vz_slice[i] *= -1.0;
+            let pz_val = arena.z()[i];
+            if pz_val < box_min {
+                arena.z()[i] = box_min;
+                arena.vz()[i] *= -1.0;
+            } else if pz_val > box_max {
+                arena.z()[i] = box_max;
+                arena.vz()[i] *= -1.0;
             }
         }
     }
 }
 
-pub fn update() {
-    initialize_timestep();
-    add_densities();
+pub fn update(arena: &mut Arena) {
+    initialize_timestep(arena);
+    add_densities(arena);
 
     // Add gravity to accelerations
-    let ay_slice = ay();
     for i in 0..N {
-        ay_slice[i] += GLOBALS.gravity as f32;
+        arena.ay()[i] += GLOBALS.gravity as f32;
     }
     
-    reflect();
-    leapfrog();
+    reflect(arena);
+    leapfrog(arena);
 }

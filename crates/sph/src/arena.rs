@@ -1,67 +1,77 @@
 use crate::constants::{N, ARENA_SIZE};
 
-static mut ARENA: [f32; ARENA_SIZE] = [0.0; ARENA_SIZE];
-
-pub fn arena_len() -> usize { 
-    ARENA_SIZE 
+pub struct Arena {
+    data: [f32; ARENA_SIZE],
 }
 
-pub fn arena_ptr() -> *const f32 {
-    unsafe { ARENA.as_ptr() }
-}
+impl Arena {
+    pub fn new() -> Self {
+        Arena {
+            data: [0.0; ARENA_SIZE],
+        }
+    }
 
-pub fn x() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(0 * N), N) }
-}
+    pub fn len(&self) -> usize { 
+        ARENA_SIZE 
+    }
 
-pub fn y() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(1 * N), N) }
-}
+    pub fn ptr(&self) -> *const f32 {
+        self.data.as_ptr()
+    }
 
-pub fn z() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(2 * N), N) }
-}
+    pub fn x(&mut self) -> &mut [f32] {
+        &mut self.data[0 * N..(0 * N) + N]
+    }
 
-pub fn vx() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(3 * N), N) }
-}
+    pub fn y(&mut self) -> &mut [f32] {
+        &mut self.data[1 * N..(1 * N) + N]
+    }
 
-pub fn vy() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(4 * N), N) }
-}
+    pub fn z(&mut self) -> &mut [f32] {
+        &mut self.data[2 * N..(2 * N) + N]
+    }
 
-pub fn vz() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(5 * N), N) }
-}
+    pub fn vx(&mut self) -> &mut [f32] {
+        &mut self.data[3 * N..(3 * N) + N]
+    }
 
-pub fn ax() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(6 * N), N) }
-}
+    pub fn vy(&mut self) -> &mut [f32] {
+        &mut self.data[4 * N..(4 * N) + N]
+    }
 
-pub fn ay() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(7 * N), N) }
-}
+    pub fn vz(&mut self) -> &mut [f32] {
+        &mut self.data[5 * N..(5 * N) + N]
+    }
 
-pub fn az() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(8 * N), N) }
-}
+    pub fn ax(&mut self) -> &mut [f32] {
+        &mut self.data[6 * N..(6 * N) + N]
+    }
 
-pub fn ax_() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(9 * N), N) }
-}
+    pub fn ay(&mut self) -> &mut [f32] {
+        &mut self.data[7 * N..(7 * N) + N]
+    }
 
-pub fn ay_() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(10 * N), N) }
-}
+    pub fn az(&mut self) -> &mut [f32] {
+        &mut self.data[8 * N..(8 * N) + N]
+    }
 
-pub fn az_() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(11 * N), N) }
-}
+    pub fn ax_(&mut self) -> &mut [f32] {
+        &mut self.data[9 * N..(9 * N) + N]
+    }
 
-pub fn rho() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(12 * N), N) }
-}
+    pub fn ay_(&mut self) -> &mut [f32] {
+        &mut self.data[10 * N..(10 * N) + N]
+    }
 
-pub fn p() -> &'static mut [f32] {
-    unsafe { std::slice::from_raw_parts_mut(ARENA.as_mut_ptr().add(13 * N), N) }
+    pub fn az_(&mut self) -> &mut [f32] {
+        &mut self.data[11 * N..(11 * N) + N]
+    }
+
+    pub fn rho(&mut self) -> &mut [f32] {
+        &mut self.data[12 * N..(12 * N) + N]
+    }
+
+    pub fn p(&mut self) -> &mut [f32] {
+        &mut self.data[13 * N..(13 * N) + N]
+    }
 }

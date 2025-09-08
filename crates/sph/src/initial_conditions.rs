@@ -1,7 +1,7 @@
-use crate::arena::*;
+use crate::arena::Arena;
 use crate::constants::N;
 
-pub fn fill_arena() {
+pub fn fill_arena(arena: &mut Arena) {
     let box_min = -1.6f32;
     let box_max = 1.6f32;
     let domain_width = box_max - box_min;
@@ -14,21 +14,6 @@ pub fn fill_arena() {
     let aspect_ratio = triangle_base_width / triangle_height;
     let approx_rows = ((N as f32) / (0.5 * aspect_ratio)).sqrt();
     let rows = (approx_rows.ceil() as usize).max(1);
-
-    let x_slice = x();
-    let y_slice = y();
-    let z_slice = z();
-    let vx_slice = vx();
-    let vy_slice = vy();
-    let vz_slice = vz();
-    let ax_slice = ax();
-    let ay_slice = ay();
-    let az_slice = az();
-    let ax_prev = ax_();
-    let ay_prev = ay_();
-    let az_prev = az_();
-    let rho_slice = rho();
-    let p_slice = p();
 
     let mut particle_index = 0;
 
@@ -53,23 +38,23 @@ pub fn fill_arena() {
 
             let x = box_min + 0.1 + col as f32 * spacing;
 
-            x_slice[particle_index] = x;
-            y_slice[particle_index] = y;
-            z_slice[particle_index] = 0.0;
+            { arena.x()[particle_index] = x; }
+            { arena.y()[particle_index] = y; }
+            { arena.z()[particle_index] = 0.0; }
 
-            vx_slice[particle_index] = 0.0;
-            vy_slice[particle_index] = 0.0;
-            vz_slice[particle_index] = 0.0;
+            { arena.vx()[particle_index] = 0.0; }
+            { arena.vy()[particle_index] = 0.0; }
+            { arena.vz()[particle_index] = 0.0; }
 
-            ax_slice[particle_index] = 0.0;
-            ay_slice[particle_index] = 0.0;
-            az_slice[particle_index] = 0.0;
-            ax_prev[particle_index] = 0.0;
-            ay_prev[particle_index] = 0.0;
-            az_prev[particle_index] = 0.0;
+            { arena.ax()[particle_index] = 0.0; }
+            { arena.ay()[particle_index] = 0.0; }
+            { arena.az()[particle_index] = 0.0; }
+            { arena.ax_()[particle_index] = 0.0; }
+            { arena.ay_()[particle_index] = 0.0; }
+            { arena.az_()[particle_index] = 0.0; }
 
-            rho_slice[particle_index] = 0.0;
-            p_slice[particle_index] = 0.0;
+            { arena.rho()[particle_index] = 0.0; }
+            { arena.p()[particle_index] = 0.0; }
 
             particle_index += 1;
         }

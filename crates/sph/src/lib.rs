@@ -1,4 +1,5 @@
 use wasm_bindgen::prelude::*;
+use std::sync::{Mutex, OnceLock};
 
 pub mod spatial_hash;
 pub mod kernel;
@@ -7,22 +8,30 @@ pub mod initial_conditions;
 pub mod constants;
 pub mod simulation;
 
+static ARENA: OnceLock<Mutex<arena::Arena>> = OnceLock::new();
+
+fn get_arena() -> &'static Mutex<arena::Arena> {
+    ARENA.get_or_init(|| Mutex::new(arena::Arena::new()))
+}
+
 #[wasm_bindgen]
 pub fn arena_len() -> usize { 
-    arena::arena_len()
+    get_arena().lock().unwrap().len()
 }
 
 #[wasm_bindgen]
 pub fn arena_ptr() -> *const f32 {
-    arena::arena_ptr()
+    get_arena().lock().unwrap().ptr()
 }
 
 #[wasm_bindgen]
 pub fn fill_arena() {
-    initial_conditions::fill_arena();
+    let mut arena_guard = get_arena().lock().unwrap();
+    initial_conditions::fill_arena(&mut *arena_guard);
 }
 
 #[wasm_bindgen]
 pub fn update() {
-    simulation::update();
+    let mut arena_guard = get_arena().lock().unwrap();
+    simulation::update(&mut *arena_guard);
 }
