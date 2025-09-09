@@ -11,10 +11,18 @@ declare global {
 
   // Singleton-ish data structure to hold global simulation state
   interface Arena {
-    positions: Float32Array;
-    velocities: Float32Array;
-    acceleration: Float32Array;
-    preAcceleration: Float32Array;
+    px: Float32Array;
+    py: Float32Array;
+    pz: Float32Array;
+    vx: Float32Array;
+    vy: Float32Array;
+    vz: Float32Array;
+    ax: Float32Array;
+    ay: Float32Array;
+    az: Float32Array;
+    aax: Float32Array;
+    aay: Float32Array;
+    aaz: Float32Array;
     densities: Float32Array;
     pressures: Float32Array;
     grid: Grid;
@@ -48,6 +56,7 @@ declare global {
     recordUntil: number;
     pauseAfter: number;
     colorMode: 'pressure' | 'density';
+    backendMode: 'js' | 'wasm';
   }
 
   interface View {

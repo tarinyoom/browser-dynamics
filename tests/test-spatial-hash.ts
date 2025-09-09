@@ -104,14 +104,11 @@ describe('findNeighbors', () => {
     const pointToCell = new Array(numParticles).fill(0);
     
     // Place 4 points in the center area of the grid
-    const positions = new Float32Array([
-      1.0, 1.0, 0,  // point 0
-      1.1, 1.1, 0,  // point 1
-      1.2, 1.2, 0,  // point 2
-      1.3, 1.3, 0   // point 3
-    ]);
+    const px = new Float32Array([1.0, 1.1, 1.2, 1.3]);
+    const py = new Float32Array([1.0, 1.1, 1.2, 1.3]);
+    const pz = new Float32Array([0.0, 0.0, 0.0, 0.0]);
     
-    populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
+    populateGrid(px, py, pz, grid, cellContents, pointToCell, numParticles, invH);
     const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
     findNeighbors(grid, cellContents, neighbors);
     
@@ -133,14 +130,11 @@ describe('findNeighbors', () => {
     const pointToCell = new Array(numParticles).fill(0);
     
     // Place points in adjacent cells
-    const positions = new Float32Array([
-      0.9, 0.9, 0,  // point 0 - cell (2,2)
-      1.1, 0.9, 0,  // point 1 - cell (3,2) 
-      0.9, 1.1, 0,  // point 2 - cell (2,3)
-      1.1, 1.1, 0   // point 3 - cell (3,3)
-    ]);
+    const px = new Float32Array([0.9, 1.1, 0.9, 1.1]);
+    const py = new Float32Array([0.9, 0.9, 1.1, 1.1]);
+    const pz = new Float32Array([0.0, 0.0, 0.0, 0.0]);
     
-    populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
+    populateGrid(px, py, pz, grid, cellContents, pointToCell, numParticles, invH);
     const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
     findNeighbors(grid, cellContents, neighbors);
     
@@ -162,14 +156,11 @@ describe('findNeighbors', () => {
     const pointToCell = new Array(numParticles).fill(0);
     
     // Place points far apart
-    const positions = new Float32Array([
-      0, 0, 0,    // point 0
-      3, 3, 0,    // point 1 - far away
-      0.5, 0.5, 0, // point 2 - close to 0
-      3.5, 3.5, 0  // point 3 - close to 1
-    ]);
+    const px = new Float32Array([0.0, 3.0, 0.5, 3.5]);
+    const py = new Float32Array([0.0, 3.0, 0.5, 3.5]);
+    const pz = new Float32Array([0.0, 0.0, 0.0, 0.0]);
     
-    populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
+    populateGrid(px, py, pz, grid, cellContents, pointToCell, numParticles, invH);
     const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
     findNeighbors(grid, cellContents, neighbors);
     
@@ -192,12 +183,11 @@ describe('findNeighbors', () => {
     const pointToCell = new Array(numParticles).fill(0);
     
     // Only place 2 points in sparse grid
-    const positions = new Float32Array([
-      0, 0, 0,    // point 0
-      2, 2, 0     // point 1 - diagonal, not adjacent
-    ]);
+    const px = new Float32Array([0.0, 2.0]);
+    const py = new Float32Array([0.0, 2.0]);
+    const pz = new Float32Array([0.0, 0.0]);
     
-    populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
+    populateGrid(px, py, pz, grid, cellContents, pointToCell, numParticles, invH);
     const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
     findNeighbors(grid, cellContents, neighbors);
     
@@ -217,14 +207,11 @@ describe('findNeighbors', () => {
     const pointToCell = new Array(numParticles).fill(0);
     
     // Place points in same cell but test ordering
-    const positions = new Float32Array([
-      0.5, 0.5, 0,  // point 0
-      0.6, 0.6, 0,  // point 1
-      0.7, 0.7, 0,  // point 2
-      0.8, 0.8, 0   // point 3
-    ]);
+    const px = new Float32Array([0.5, 0.6, 0.7, 0.8]);
+    const py = new Float32Array([0.5, 0.6, 0.7, 0.8]);
+    const pz = new Float32Array([0.0, 0.0, 0.0, 0.0]);
     
-    populateGrid(positions, grid, cellContents, pointToCell, numParticles, invH);
+    populateGrid(px, py, pz, grid, cellContents, pointToCell, numParticles, invH);
     const neighbors: number[][] = Array.from({ length: numParticles }, () => []);
     findNeighbors(grid, cellContents, neighbors);
     

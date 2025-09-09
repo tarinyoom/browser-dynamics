@@ -38,15 +38,15 @@ function hash(x: number, y: number, z: number, grid: Grid): number {
   return x + count[0] * (y + count[1] * z);
 }
 
-function populateGrid(positions: Float32Array, grid: Grid, contents: number[][], gridMap: number[], numParticles: number, invH: number): void {
+function populateGrid(px: Float32Array, py: Float32Array, pz: Float32Array, grid: Grid, contents: number[][], gridMap: number[], numParticles: number, invH: number): void {
   for (let i = 0; i < contents.length; i++) {
     contents[i].length = 0;
   }
 
   for (let i = 0; i < numParticles; i++) {
-    const x = positions[i * 3];
-    const y = positions[i * 3 + 1];
-    const z = positions[i * 3 + 2];
+    const x = px[i];
+    const y = py[i];
+    const z = pz[i];
     const cell = getCell(x, y, z, grid, invH);
     const cellIndex = hash(cell[0], cell[1], cell[2], grid);
     contents[cellIndex].push(i);

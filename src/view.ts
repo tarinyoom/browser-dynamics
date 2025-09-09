@@ -85,11 +85,18 @@ export function createView(container: HTMLElement, recordUntil: number | undefin
   return { renderer, camera, scene, particles, clock };
 }
 
-export function drawFrame(view: View, positions: Float32Array, scalars: Float32Array, minValue: number, maxValue: number): void {
+export function drawFrame(view: View, px: Float32Array, py: Float32Array, pz: Float32Array, scalars: Float32Array, minValue: number, maxValue: number): void {
   const geometry = view.particles.geometry as THREE.BufferGeometry;
 
   const posAttr = geometry.getAttribute('position') as THREE.BufferAttribute;
-  posAttr.copyArray(positions);
+  const posArray = posAttr.array as Float32Array;
+  
+  for (let i = 0; i < px.length; i++) {
+    posArray[i * 3] = px[i];
+    posArray[i * 3 + 1] = py[i];
+    posArray[i * 3 + 2] = pz[i];
+  }
+  
   posAttr.needsUpdate = true;
 
   const colorAttr = geometry.getAttribute('color') as THREE.BufferAttribute;

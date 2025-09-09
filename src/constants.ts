@@ -1,7 +1,7 @@
 export const globals: CalculationParameters = {
   timestep: 1/2000,
   maxTimestepsPerFrame: 5,
-  numParticles: 1500,
+  numParticles: 1000,
   smoothingRadius: 0.3,
   dim: 2,
   boxMin: -1.6,
@@ -14,5 +14,6 @@ export const globals: CalculationParameters = {
 export const debug: DebugParameters = {
   recordUntil: 7000,
   pauseAfter: 50000,
-  colorMode: 'pressure'
+  colorMode: 'pressure',
+  backendMode: 'wasm'
 } as const;
