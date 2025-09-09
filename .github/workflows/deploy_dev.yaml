@@ -8,6 +8,7 @@ jobs:
   deploy:
     name: Build and Deploy to Cloudflare Pages
     runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
 
     steps:
       - name: Checkout code
