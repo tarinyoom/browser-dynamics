@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run && cd crates/sph && cargo test",
     "test:watch": "vitest",
-    "clean": "rm -rf dist/ crates/sph/pkg/ crates/sph/target/"
+    "clean": "rm -rf dist/ crates/sph/pkg/ crates/sph/target/",
+    "cli": "cargo run --bin sph-cli"
   },
   "devDependencies": {
     "@types/three": "^0.180.0",
