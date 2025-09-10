@@ -38,25 +38,11 @@ declare global {
     taitB: number; // 'B' constant for Tait's equation
   }
 
-  interface CalculationParameters {
-    timestep: number;
-    maxTimestepsPerFrame: number;
-    numParticles: number;
-    smoothingRadius: number;
-    dim: number;
-    boxMin: number;
-    boxMax: number;
-    gravity: number;
-
-    taitGamma: number; // exponent for Tait's equation
-    taitC: number; // speed of sound in Tait's equation
-  }
 
   interface DebugParameters {
     recordUntil: number;
     pauseAfter: number;
     colorMode: 'pressure' | 'density';
-    backendMode: 'js' | 'wasm';
   }
 
   interface View {
