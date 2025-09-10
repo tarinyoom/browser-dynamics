@@ -1,6 +1,14 @@
 [workspace]
 members = [
     "crates/sph",
+    "crates/wasm",
     "crates/cli",
 ]
 resolver = "2"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "debuginfo"
+panic = "abort"

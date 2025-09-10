@@ -2,8 +2,8 @@ import { initializeArena, step } from './simulation';
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug, globals } from './constants';
-import init, { arena_ptr, InitOutput, update } from "../crates/sph/pkg/sph.js";
-import wasmUrl from "../crates/sph/pkg/sph_bg.wasm?url";
+import init, { arena_ptr, InitOutput, update } from "../crates/wasm/pkg/wasm.js";
+import wasmUrl from "../crates/wasm/pkg/wasm_bg.wasm?url";
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
   switch (colorMode) {

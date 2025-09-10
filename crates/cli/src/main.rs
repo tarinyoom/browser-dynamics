@@ -1,13 +1,15 @@
-use sph::{arena_len, update};
+use sph::{state::State, simulation};
 
 fn main() {
     println!("SPH Simulation CLI");
     
-    println!("Initial particle count: {}", arena_len());
+    let mut state = State::new();
+    
+    println!("Initial particle count: {}", state.len());
     
     println!("Running simulation step...");
-    update();
+    simulation::update(&mut state);
     
     println!("Simulation step completed");
-    println!("Final particle count: {}", arena_len());
+    println!("Final particle count: {}", state.len());
 }
