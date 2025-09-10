@@ -10,11 +10,6 @@ fn get_state() -> &'static Mutex<State> {
 }
 
 #[wasm_bindgen]
-pub fn arena_len() -> usize { 
-    get_state().lock().unwrap().len()
-}
-
-#[wasm_bindgen]
 pub fn arena_ptr() -> *const f32 {
     get_state().lock().unwrap().ptr()
 }
