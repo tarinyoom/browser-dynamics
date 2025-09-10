@@ -5,13 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "wasm-pack build crates/wasm --target web --out-dir pkg",
+    "prebuild": "wasm-pack build crates/wasm --release --target web --out-dir pkg",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest run && cd crates/sph && cargo test",
-    "test:watch": "vitest",
-    "clean": "rm -rf dist/",
-    "cli": "cargo run --bin sph-cli"
+    "test": "vitest run && cargo test",
+    "clean": "rm -rf dist/ && cargo clean && cd crates/wasm && rm -rf pkg",
+    "cli": "cargo run --release --bin sph-cli"
   },
   "devDependencies": {
     "@types/three": "^0.180.0",
