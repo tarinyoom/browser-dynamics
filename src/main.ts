@@ -1,25 +1,24 @@
-import { initializeArena, step } from './simulation'; 
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
-import { debug, globals } from './constants';
+import { debug } from './constants';
 import init, { arena_ptr, InitOutput, update } from "../crates/wasm/pkg/wasm.js";
 import wasmUrl from "../crates/wasm/pkg/wasm_bg.wasm?url";
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
   switch (colorMode) {
     case 'pressure':
-      return (arena: Arena) => {
-        return { scalars: arena.pressures, minValue: 0.0, maxValue: 50.0 };
+      return () => {
+        return { minValue: 0.0, maxValue: 0.5 };
       };
     case 'density':
-      const referenceDensity = 2.0 / (globals.boxMax - globals.boxMin) ** 2;
-      return (arena: Arena) => {
-        return { scalars: arena.densities, minValue: 0, maxValue: 2 * referenceDensity };
+      const referenceDensity = 0.39;
+      return () => {
+        return { minValue: 0, maxValue: 2 * referenceDensity };
       };
   }
 }
 
-function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
+function makeAnimation(view: View, wasm: InitOutput) {
   const getScalarsAndRange = createScalarMapper(debug.colorMode);
 
   // Start with invalid state to force initial array creation
@@ -28,13 +27,13 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
   let wasm_x: Float32Array, wasm_y: Float32Array, wasm_z: Float32Array, wasm_rho: Float32Array;
   
   // Function to create arrays from current WASM memory
-  function createWasmArrays(ptr: number, buffer: ArrayBuffer) {
+  function createWasmArrays(ptr: number, buffer: ArrayBuffer, numParticles: number) {
     if ((ptr & 3) !== 0) throw new Error("misaligned f32 pointer");
     
-    wasm_x = new Float32Array(buffer, ptr, globals.numParticles);
-    wasm_y = new Float32Array(buffer, ptr + globals.numParticles * 4, globals.numParticles);
-    wasm_z = new Float32Array(buffer, ptr + globals.numParticles * 8, globals.numParticles);
-    wasm_rho = new Float32Array(buffer, ptr + globals.numParticles * 48, globals.numParticles);
+    wasm_x = new Float32Array(buffer, ptr, numParticles);
+    wasm_y = new Float32Array(buffer, ptr + numParticles * 4, numParticles);
+    wasm_z = new Float32Array(buffer, ptr + numParticles * 8, numParticles);
+    wasm_rho = new Float32Array(buffer, ptr + numParticles * 48, numParticles);
   }
   
   // Function to detect discrepancies and update arrays
@@ -48,7 +47,7 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
       
       currentPtr = newPtr;
       currentBuffer = newBuffer;
-      createWasmArrays(currentPtr, currentBuffer);
+      createWasmArrays(currentPtr, currentBuffer, 1000);
     }
   }
   
@@ -60,14 +59,9 @@ function makeAnimation(view: View, arena: Arena, wasm: InitOutput) {
       
       if (isDev() && nFrames-- <= 0) return;
       
-      const { scalars, minValue, maxValue } = getScalarsAndRange(arena);
-      if (debug.backendMode === 'wasm') {
-        update();
-        drawFrame(view, wasm_x, wasm_y, wasm_z, wasm_rho, 0.0, 0.5);
-      } else {
-        drawFrame(view, arena.px, arena.py, arena.pz, scalars, minValue, maxValue);
-        step(arena);
-      }
+      const { minValue, maxValue } = getScalarsAndRange();
+      update();
+      drawFrame(view, wasm_x, wasm_y, wasm_z, wasm_rho, minValue, maxValue);
       requestAnimationFrame(animation);
     } catch (err) {
       console.error("Animation stopped due to error:", err);
@@ -104,7 +98,6 @@ async function boot() {
   if (!container) throw new Error("Missing #app container");
 
   const view = createView(container, isDev() ? debug.recordUntil : undefined);
-  const arena = initializeArena();
 
   window.addEventListener('resize', () => {
     view.camera.aspect = container.clientWidth / container.clientHeight;
@@ -112,7 +105,7 @@ async function boot() {
     view.renderer.setSize(container.clientWidth, container.clientHeight);
   });
 
-  makeAnimation(view, arena, wasm)();
+  makeAnimation(view, wasm)();
 }
 
 window.addEventListener('pageshow', boot, { once: true });

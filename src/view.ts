@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { globals } from './constants';
 
 function recordAndSave(canvas: HTMLCanvasElement, fps: number, duration: number): void {
   const stream = canvas.captureStream(fps);
@@ -77,7 +76,7 @@ export function createView(container: HTMLElement, recordUntil: number | undefin
   const renderer = createRenderer(container, recordUntil);
   const camera = createCamera(container.clientWidth / container.clientHeight);
   const scene = createScene();
-  const particles = createParticles(globals.numParticles);
+  const particles = createParticles(1000); // hardcoded for now, can be made configurable later
   const clock = new THREE.Clock();
 
   scene.add(particles);
@@ -108,6 +107,7 @@ export function drawFrame(view: View, px: Float32Array, py: Float32Array, pz: Fl
   for (let i = 0; i < scalars.length; i++) {
     // Normalize scalar to [0, 1] range
     const t = range > 0 ? Math.max(0, Math.min(1, (scalars[i] - minValue) / range)) : 0;
+    console.log(scalars[i], t);
 
     // [0, 1] -> [cold, hot] color mapping
     if (t < 0.5) {
