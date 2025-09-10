@@ -9,8 +9,8 @@ export default defineConfig({
       name: 'copy-wasm-files',
       writeBundle() {
         mkdirSync('dist/assets', { recursive: true })
-        copyFileSync('crates/sph/pkg/sph_bg.wasm', 'dist/assets/sph_bg.wasm')
-        copyFileSync('crates/sph/pkg/sph.js', 'dist/assets/sph.js')
+        copyFileSync('crates/wasm/pkg/wasm_bg.wasm', 'dist/assets/wasm_bg.wasm')
+        copyFileSync('crates/wasm/pkg/wasm.js', 'dist/assets/wasm.js')
       }
     }
   ],

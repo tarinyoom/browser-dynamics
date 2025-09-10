@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "crates/sph",
+    "crates/wasm",
     "crates/cli",
 ]
 resolver = "2"
