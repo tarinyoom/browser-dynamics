@@ -1,7 +1,7 @@
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug } from './constants';
-import init, { arena_ptr, InitOutput, update } from "../crates/wasm/pkg/wasm.js";
+import init, { arena_ptr, InitOutput, update, num_particles, get_x, get_y, get_z, get_rho } from "../crates/wasm/pkg/wasm.js";
 import wasmUrl from "../crates/wasm/pkg/wasm_bg.wasm?url";
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
@@ -27,13 +27,21 @@ function makeAnimation(view: View, wasm: InitOutput) {
   let wasm_x: Float32Array, wasm_y: Float32Array, wasm_z: Float32Array, wasm_rho: Float32Array;
   
   // Function to create arrays from current WASM memory
-  function createWasmArrays(ptr: number, buffer: ArrayBuffer, numParticles: number) {
-    if ((ptr & 3) !== 0) throw new Error("misaligned f32 pointer");
+  function createWasmArrays(buffer: ArrayBuffer) {
+    const numParts = num_particles();
+    const x_ptr = get_x();
+    const y_ptr = get_y();
+    const z_ptr = get_z();
+    const rho_ptr = get_rho();
     
-    wasm_x = new Float32Array(buffer, ptr, numParticles);
-    wasm_y = new Float32Array(buffer, ptr + numParticles * 4, numParticles);
-    wasm_z = new Float32Array(buffer, ptr + numParticles * 8, numParticles);
-    wasm_rho = new Float32Array(buffer, ptr + numParticles * 48, numParticles);
+    if ((x_ptr & 3) !== 0 || (y_ptr & 3) !== 0 || (z_ptr & 3) !== 0 || (rho_ptr & 3) !== 0) {
+      throw new Error("misaligned f32 pointer");
+    }
+    
+    wasm_x = new Float32Array(buffer, x_ptr, numParts);
+    wasm_y = new Float32Array(buffer, y_ptr, numParts);
+    wasm_z = new Float32Array(buffer, z_ptr, numParts);
+    wasm_rho = new Float32Array(buffer, rho_ptr, numParts);
   }
   
   // Function to detect discrepancies and update arrays
@@ -47,7 +55,7 @@ function makeAnimation(view: View, wasm: InitOutput) {
       
       currentPtr = newPtr;
       currentBuffer = newBuffer;
-      createWasmArrays(currentPtr, currentBuffer, 1000);
+      createWasmArrays(currentBuffer);
     }
   }
   
@@ -97,7 +105,7 @@ async function boot() {
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
-  const view = createView(container, isDev() ? debug.recordUntil : undefined);
+  const view = createView(container, isDev() ? debug.recordUntil : undefined, num_particles());
 
   window.addEventListener('resize', () => {
     view.camera.aspect = container.clientWidth / container.clientHeight;

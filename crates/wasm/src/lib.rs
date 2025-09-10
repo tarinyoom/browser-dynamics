@@ -24,3 +24,28 @@ pub fn update() {
     let mut state_guard = get_state().lock().unwrap();
     simulation::update(&mut *state_guard);
 }
+
+#[wasm_bindgen]
+pub fn num_particles() -> usize {
+    sph::constants::N
+}
+
+#[wasm_bindgen]
+pub fn get_x() -> *const f32 {
+    get_state().lock().unwrap().x.as_ptr()
+}
+
+#[wasm_bindgen]
+pub fn get_y() -> *const f32 {
+    get_state().lock().unwrap().y.as_ptr()
+}
+
+#[wasm_bindgen]
+pub fn get_z() -> *const f32 {
+    get_state().lock().unwrap().z.as_ptr()
+}
+
+#[wasm_bindgen]
+pub fn get_rho() -> *const f32 {
+    get_state().lock().unwrap().rho.as_ptr()
+}
