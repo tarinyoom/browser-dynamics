@@ -1,7 +1,7 @@
 import { createView, drawFrame } from './view';
 import { isDev } from './env';
 import { debug } from './constants';
-import init, { arena_ptr, InitOutput, update, num_particles, get_x, get_y, get_z, get_rho } from "../crates/wasm/pkg/wasm.js";
+import init, { get_state_ptr, InitOutput, update, num_particles, get_x_ptr, get_y_ptr, get_z_ptr, get_rho_ptr } from "../crates/wasm/pkg/wasm.js";
 import wasmUrl from "../crates/wasm/pkg/wasm_bg.wasm?url";
 
 function createScalarMapper(colorMode: 'pressure' | 'density') {
@@ -29,10 +29,10 @@ function makeAnimation(view: View, wasm: InitOutput) {
   // Function to create arrays from current WASM memory
   function createWasmArrays(buffer: ArrayBuffer) {
     const numParts = num_particles();
-    const x_ptr = get_x();
-    const y_ptr = get_y();
-    const z_ptr = get_z();
-    const rho_ptr = get_rho();
+    const x_ptr = get_x_ptr();
+    const y_ptr = get_y_ptr();
+    const z_ptr = get_z_ptr();
+    const rho_ptr = get_rho_ptr();
     
     if ((x_ptr & 3) !== 0 || (y_ptr & 3) !== 0 || (z_ptr & 3) !== 0 || (rho_ptr & 3) !== 0) {
       throw new Error("misaligned f32 pointer");
@@ -46,7 +46,7 @@ function makeAnimation(view: View, wasm: InitOutput) {
   
   // Function to detect discrepancies and update arrays
   function updateWasmArraysIfNeeded() {
-    const newPtr = arena_ptr();
+    const newPtr = get_state_ptr();
     const newBuffer = wasm.memory.buffer;
     
     // Check if pointer or buffer has changed
