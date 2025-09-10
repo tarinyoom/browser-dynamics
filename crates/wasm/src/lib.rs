@@ -10,11 +10,6 @@ fn get_state() -> &'static Mutex<State> {
 }
 
 #[wasm_bindgen]
-pub fn get_state_ptr() -> *const f32 {
-    get_state().lock().unwrap().ptr()
-}
-
-#[wasm_bindgen]
 pub fn update() {
     let mut state_guard = get_state().lock().unwrap();
     simulation::update(&mut *state_guard);
@@ -23,6 +18,11 @@ pub fn update() {
 #[wasm_bindgen]
 pub fn num_particles() -> usize {
     sph::constants::N
+}
+
+#[wasm_bindgen]
+pub fn get_state_ptr() -> *const f32 {
+    get_state().lock().unwrap().ptr()
 }
 
 #[wasm_bindgen]
