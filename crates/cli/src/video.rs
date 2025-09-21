@@ -1,5 +1,4 @@
-use image::{ImageBuffer, Rgb, RgbImage};
-use std::path::Path;
+use image::{ImageBuffer, RgbImage};
 
 pub struct FrameGenerator {
     frames: Vec<Vec<u8>>,
@@ -41,26 +40,6 @@ impl FrameGenerator {
     }
 }
 
-pub fn create_pixel_frame(width: usize, height: usize, pixel_x: usize, pixel_y: usize) -> Vec<u8> {
-    let mut pixels = vec![0u8; width * height * 3]; // RGB
-
-    // Set background to black
-    for chunk in pixels.chunks_mut(3) {
-        chunk[0] = 0; // R
-        chunk[1] = 0; // G
-        chunk[2] = 0; // B
-    }
-
-    // Set the moving pixel to white
-    if pixel_x < width && pixel_y < height {
-        let idx = (pixel_y * width + pixel_x) * 3;
-        pixels[idx] = 255;     // R
-        pixels[idx + 1] = 255; // G
-        pixels[idx + 2] = 255; // B
-    }
-
-    pixels
-}
 
 pub fn generate_fluid_animation(
     width: usize,
