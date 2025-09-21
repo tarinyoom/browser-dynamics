@@ -49,6 +49,45 @@ pub fn generate_fluid_animation(
     output_dir: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use sph::{state::State, simulation};
+    use crate::renderer::ParticleRenderer;
+
+    let mut frame_gen = FrameGenerator::new(width, height)?;
+    let mut state = State::new();
+
+    println!("Initial particle count: {}", state.len());
+    println!("Recording every {} simulation steps", step_interval);
+    println!("Initializing GPU renderer...");
+
+    // Initialize GPU renderer
+    let renderer = pollster::block_on(ParticleRenderer::new(width as u32, height as u32))?;
+
+    for frame in 0..frames {
+        println!("Generating frame {}/{}", frame + 1, frames);
+
+        // Run multiple simulation steps before recording
+        for _ in 0..step_interval {
+            simulation::update(&mut state);
+        }
+
+        // Render particles to frame using GPU
+        let frame_data = renderer.render_particles(&state)?;
+        frame_gen.add_frame(frame_data)?;
+    }
+
+    frame_gen.save_frames(output_dir)?;
+    let total_steps = frames * step_interval;
+    println!("Simulation completed: {} frames, {} total steps", frames, total_steps);
+    Ok(())
+}
+
+pub fn generate_fluid_animation_cpu(
+    width: usize,
+    height: usize,
+    frames: usize,
+    step_interval: usize,
+    output_dir: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use sph::{state::State, simulation};
 
     let mut frame_gen = FrameGenerator::new(width, height)?;
     let mut state = State::new();
@@ -64,7 +103,7 @@ pub fn generate_fluid_animation(
             simulation::update(&mut state);
         }
 
-        // Render particles to frame
+        // Render particles to frame using CPU
         let frame_data = render_particles(&state, width, height);
         frame_gen.add_frame(frame_data)?;
     }

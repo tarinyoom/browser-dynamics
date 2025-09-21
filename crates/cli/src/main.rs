@@ -1,6 +1,7 @@
 use clap::Parser;
 
 mod video;
+mod renderer;
 
 #[derive(Parser)]
 #[command(name = "sph-cli")]
@@ -16,12 +17,20 @@ struct Cli {
     frames: usize,
     #[arg(short, long, default_value_t = 1)]
     step_interval: usize,
+    #[arg(long)]
+    cpu: bool,
 }
 
 fn main() {
     let cli = Cli::parse();
 
-    match video::generate_fluid_animation(cli.width, cli.height, cli.frames, cli.step_interval, &cli.output) {
+    let result = if cli.cpu {
+        video::generate_fluid_animation_cpu(cli.width, cli.height, cli.frames, cli.step_interval, &cli.output)
+    } else {
+        video::generate_fluid_animation(cli.width, cli.height, cli.frames, cli.step_interval, &cli.output)
+    };
+
+    match result {
         Ok(()) => println!("Frames generated successfully in directory: {}", cli.output),
         Err(e) => eprintln!("Error generating frames: {}", e),
     }
