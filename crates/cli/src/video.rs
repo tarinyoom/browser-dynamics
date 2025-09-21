@@ -45,6 +45,7 @@ pub fn generate_fluid_animation(
     width: usize,
     height: usize,
     frames: usize,
+    step_interval: usize,
     output_dir: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use sph::{state::State, simulation};
@@ -53,12 +54,15 @@ pub fn generate_fluid_animation(
     let mut state = State::new();
 
     println!("Initial particle count: {}", state.len());
+    println!("Recording every {} simulation steps", step_interval);
 
     for frame in 0..frames {
         println!("Generating frame {}/{}", frame + 1, frames);
 
-        // Update simulation state
-        simulation::update(&mut state);
+        // Run multiple simulation steps before recording
+        for _ in 0..step_interval {
+            simulation::update(&mut state);
+        }
 
         // Render particles to frame
         let frame_data = render_particles(&state, width, height);
@@ -66,7 +70,8 @@ pub fn generate_fluid_animation(
     }
 
     frame_gen.save_frames(output_dir)?;
-    println!("Simulation completed with {} particles", state.len());
+    let total_steps = frames * step_interval;
+    println!("Simulation completed: {} frames, {} total steps", frames, total_steps);
     Ok(())
 }
 
