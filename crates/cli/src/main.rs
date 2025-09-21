@@ -19,7 +19,7 @@ enum Commands {
     Frames {
         #[arg(short, long, default_value = "frames")]
         output: String,
-        #[arg(short, long, default_value_t = 640)]
+        #[arg(long, default_value_t = 640)]
         width: usize,
         #[arg(long, default_value_t = 480)]
         height: usize,

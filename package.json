@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run && cargo test",
     "clean": "rm -rf dist/ && cargo clean && cd crates/wasm && rm -rf pkg",
-    "cli": "cargo run --release --bin sph-cli"
+    "cli": "cargo run --release --bin sph-cli frames --width 400 --height 300 -f 60 -o animation"
   },
   "devDependencies": {
     "@types/three": "^0.180.0",
