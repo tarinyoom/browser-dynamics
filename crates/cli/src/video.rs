@@ -62,29 +62,64 @@ pub fn create_pixel_frame(width: usize, height: usize, pixel_x: usize, pixel_y: 
     pixels
 }
 
-pub fn generate_pixel_animation(
+pub fn generate_fluid_animation(
     width: usize,
     height: usize,
     frames: usize,
     output_dir: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    use sph::{state::State, simulation};
+
     let mut frame_gen = FrameGenerator::new(width, height)?;
+    let mut state = State::new();
+
+    println!("Initial particle count: {}", state.len());
 
     for frame in 0..frames {
-        let t = frame as f32 / frames as f32;
+        println!("Generating frame {}/{}", frame + 1, frames);
 
-        // Circular motion
-        let center_x = width as f32 / 2.0;
-        let center_y = height as f32 / 2.0;
-        let radius = width.min(height) as f32 / 3.0;
+        // Update simulation state
+        simulation::update(&mut state);
 
-        let pixel_x = (center_x + radius * (t * 2.0 * std::f32::consts::PI).cos()) as usize;
-        let pixel_y = (center_y + radius * (t * 2.0 * std::f32::consts::PI).sin()) as usize;
-
-        let frame_data = create_pixel_frame(width, height, pixel_x, pixel_y);
+        // Render particles to frame
+        let frame_data = render_particles(&state, width, height);
         frame_gen.add_frame(frame_data)?;
     }
 
     frame_gen.save_frames(output_dir)?;
+    println!("Simulation completed with {} particles", state.len());
     Ok(())
+}
+
+fn render_particles(state: &sph::state::State, width: usize, height: usize) -> Vec<u8> {
+    use sph::constants::N;
+
+    let mut pixels = vec![0u8; width * height * 3]; // RGB
+
+    // Set background to dark blue (water-like)
+    for chunk in pixels.chunks_mut(3) {
+        chunk[0] = 20;  // R
+        chunk[1] = 50;  // G
+        chunk[2] = 80;  // B
+    }
+
+    // Render each particle as a white pixel
+    for i in 0..N {
+        let x_pos = state.x[i];
+        let y_pos = state.y[i];
+
+        // Map particle position to screen coordinates
+        // Assuming particle positions are roughly in [-1.6, 1.6] range (from constants)
+        let x = ((x_pos + 1.6) / 3.2 * width as f32) as usize;
+        let y = ((y_pos + 1.6) / 3.2 * height as f32) as usize;
+
+        if x < width && y < height {
+            let idx = (y * width + x) * 3;
+            pixels[idx] = 255;     // R - white particle
+            pixels[idx + 1] = 255; // G
+            pixels[idx + 2] = 255; // B
+        }
+    }
+
+    pixels
 }

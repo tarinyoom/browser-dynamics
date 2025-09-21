@@ -32,26 +32,20 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Simulate => run_simulation(),
+        Commands::Simulate => {
+            println!("SPH Simulation CLI");
+            let mut state = State::new();
+            println!("Initial particle count: {}", state.len());
+            println!("Running simulation step...");
+            simulation::update(&mut state);
+            println!("Simulation step completed");
+            println!("Final particle count: {}", state.len());
+        }
         Commands::Frames { output, width, height, frames } => {
-            match video::generate_pixel_animation(width, height, frames, &output) {
+            match video::generate_fluid_animation(width, height, frames, &output) {
                 Ok(()) => println!("Frames generated successfully in directory: {}", output),
                 Err(e) => eprintln!("Error generating frames: {}", e),
             }
         }
     }
-}
-
-fn run_simulation() {
-    println!("SPH Simulation CLI");
-
-    let mut state = State::new();
-
-    println!("Initial particle count: {}", state.len());
-
-    println!("Running simulation step...");
-    simulation::update(&mut state);
-
-    println!("Simulation step completed");
-    println!("Final particle count: {}", state.len());
 }
