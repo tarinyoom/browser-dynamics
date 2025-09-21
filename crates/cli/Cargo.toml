@@ -9,3 +9,5 @@ path = "src/main.rs"
 
 [dependencies]
 sph = { path = "../sph" }
+image = "0.24"
+clap = { version = "4.0", features = ["derive"] }
