@@ -238,7 +238,7 @@ impl ParticleRenderer {
         })
     }
 
-    pub fn render_particles(&self, state: &sph::state::State) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    pub fn render_particles(&self, state: &crate::state::State) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         // Create particle instance data
         let particle_instances = self.create_particle_instances(state);
 
@@ -294,8 +294,8 @@ impl ParticleRenderer {
         self.read_texture_data()
     }
 
-    fn create_particle_instances(&self, state: &sph::state::State) -> Vec<ParticleInstance> {
-        use sph::constants::N;
+    fn create_particle_instances(&self, state: &crate::state::State) -> Vec<ParticleInstance> {
+        use crate::constants::N;
 
         let mut instances = Vec::new();
 

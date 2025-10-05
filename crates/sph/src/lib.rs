@@ -4,3 +4,4 @@ pub mod state;
 pub mod initial_conditions;
 pub mod constants;
 pub mod simulation;
+pub mod renderer;

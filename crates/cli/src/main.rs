@@ -1,7 +1,6 @@
 use clap::Parser;
 
 mod video;
-mod renderer;
 
 #[derive(Parser)]
 #[command(name = "sph-cli")]

@@ -7,3 +7,6 @@ edition = "2021"
 crate-type = ["rlib"]
 
 [dependencies]
+wgpu = "22"
+pollster = "0.3"
+bytemuck = { version = "1.4", features = ["derive"] }

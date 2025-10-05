@@ -48,8 +48,7 @@ pub fn generate_fluid_animation(
     step_interval: usize,
     output_dir: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use sph::{state::State, simulation};
-    use crate::renderer::ParticleRenderer;
+    use sph::{state::State, simulation, renderer::ParticleRenderer};
 
     let mut frame_gen = FrameGenerator::new(width, height)?;
     let mut state = State::new();
