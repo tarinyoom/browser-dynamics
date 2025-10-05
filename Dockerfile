@@ -4,8 +4,6 @@ RUN dnf -y update && \
     dnf -y install nodejs npm rust cargo git bash findutils which && \
     dnf clean all
 
-RUN npm install -g @anthropic-ai/claude-code
-
 ARG USERNAME=dev
 ARG UID=1000
 ARG GID=1000
