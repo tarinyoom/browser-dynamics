@@ -26,3 +26,5 @@ dist-ssr
 pkg
 target
 Cargo.lock
+
+animation

@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run && cargo test",
     "clean": "rm -rf dist/ && cargo clean && cd crates/wasm && rm -rf pkg",
-    "cli": "cargo run --release --bin sph-cli"
+    "cli": "cargo run --release --bin sph-cli -- --width 400 --height 300 -f 60 -s 10 -o animation",
+    "container": "./start-claude-container.sh"
   },
   "devDependencies": {
     "@types/three": "^0.180.0",
