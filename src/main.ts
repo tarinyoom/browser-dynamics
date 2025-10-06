@@ -1,119 +1,40 @@
-import { createView, drawFrame } from './view';
-import { isDev } from './env';
-import { debug } from './constants';
-import init, { get_state_ptr, InitOutput, update, num_particles, get_x_ptr, get_y_ptr, get_z_ptr, get_rho_ptr } from "../crates/wasm/pkg/wasm.js";
-import wasmUrl from "../crates/wasm/pkg/wasm_bg.wasm?url";
-
-function createScalarMapper(colorMode: 'pressure' | 'density') {
-  switch (colorMode) {
-    case 'pressure':
-      return () => {
-        return { minValue: 0.0, maxValue: 0.5 };
-      };
-    case 'density':
-      const referenceDensity = 0.39;
-      return () => {
-        return { minValue: 0, maxValue: 2 * referenceDensity };
-      };
+function drawCheckerboard(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Could not get 2D context');
   }
-}
 
-function makeAnimation(view: View, wasm: InitOutput) {
-  const getScalarsAndRange = createScalarMapper(debug.colorMode);
+  const squareSize = 50;
+  const cols = Math.ceil(canvas.width / squareSize);
+  const rows = Math.ceil(canvas.height / squareSize);
 
-  // Start with invalid state to force initial array creation
-  let currentPtr = -1;
-  let currentBuffer: ArrayBuffer | null = null;
-  let wasm_x: Float32Array, wasm_y: Float32Array, wasm_z: Float32Array, wasm_rho: Float32Array;
-  
-  // Function to create arrays from current WASM memory
-  function createWasmArrays(buffer: ArrayBuffer) {
-    const numParts = num_particles();
-    const x_ptr = get_x_ptr();
-    const y_ptr = get_y_ptr();
-    const z_ptr = get_z_ptr();
-    const rho_ptr = get_rho_ptr();
-    
-    if ((x_ptr & 3) !== 0 || (y_ptr & 3) !== 0 || (z_ptr & 3) !== 0 || (rho_ptr & 3) !== 0) {
-      throw new Error("misaligned f32 pointer");
-    }
-    
-    wasm_x = new Float32Array(buffer, x_ptr, numParts);
-    wasm_y = new Float32Array(buffer, y_ptr, numParts);
-    wasm_z = new Float32Array(buffer, z_ptr, numParts);
-    wasm_rho = new Float32Array(buffer, rho_ptr, numParts);
-  }
-  
-  // Function to detect discrepancies and update arrays
-  function updateWasmArraysIfNeeded() {
-    const newPtr = get_state_ptr();
-    const newBuffer = wasm.memory.buffer;
-    
-    // Check if pointer or buffer has changed
-    if (newPtr !== currentPtr || newBuffer !== currentBuffer) {
-      console.log(`WASM memory discrepancy detected: ptr ${currentPtr} -> ${newPtr}, buffer changed: ${newBuffer !== currentBuffer}`);
-      
-      currentPtr = newPtr;
-      currentBuffer = newBuffer;
-      createWasmArrays(currentBuffer);
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      ctx.fillStyle = (row + col) % 2 === 0 ? '#000000' : '#ffffff';
+      ctx.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
     }
   }
-  
-  let nFrames = debug.pauseAfter;
-  const animation = () => {
-    try {
-      // Update WASM arrays if needed before any other computation
-      updateWasmArraysIfNeeded();
-      
-      if (isDev() && nFrames-- <= 0) return;
-      
-      const { minValue, maxValue } = getScalarsAndRange();
-      update();
-      drawFrame(view, wasm_x, wasm_y, wasm_z, wasm_rho, minValue, maxValue);
-      requestAnimationFrame(animation);
-    } catch (err) {
-      console.error("Animation stopped due to error:", err);
-    }
-  };
-  return animation;
-}
-
-function nonZeroViewport() {
-  const vv = window.visualViewport;
-  const w = vv ? Math.floor(vv.width) : window.innerWidth;
-  const h = vv ? Math.floor(vv.height) : window.innerHeight;
-  return w > 2 && h > 2;
 }
 
 async function boot() {
-
-  if (document.visibilityState !== 'visible') {
-    await new Promise<void>(r => document.addEventListener('visibilitychange', function once() {
-      if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', once); r(); }
-    }));
-  }
-
-  if (!nonZeroViewport()) {
-    await new Promise<void>(r => {
-      const ro = new ResizeObserver(() => { if (nonZeroViewport()) { ro.disconnect(); r(); } });
-      ro.observe(document.documentElement);
-    });
-  }
-
-  const wasm = await init(wasmUrl);
-
   const container = document.getElementById('app');
   if (!container) throw new Error("Missing #app container");
 
-  const view = createView(container, isDev() ? debug.recordUntil : undefined, num_particles());
+  const canvas = document.createElement('canvas');
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  canvas.style.display = 'block';
+  container.appendChild(canvas);
+
+  drawCheckerboard(canvas);
 
   window.addEventListener('resize', () => {
-    view.camera.aspect = container.clientWidth / container.clientHeight;
-    view.camera.updateProjectionMatrix();
-    view.renderer.setSize(container.clientWidth, container.clientHeight);
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+    drawCheckerboard(canvas);
   });
-
-  makeAnimation(view, wasm)();
 }
 
 window.addEventListener('pageshow', boot, { once: true });

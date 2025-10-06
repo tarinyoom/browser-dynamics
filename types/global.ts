@@ -1,56 +1,5 @@
-import { WebGLRenderer, PerspectiveCamera, Scene, Points, Clock } from 'three';
-
 export {};
 
 declare global {
-
-  interface Grid {
-    count: number[];
-    offset: number[];
-  }
-
-  // Singleton-ish data structure to hold global simulation state
-  interface Arena {
-    px: Float32Array;
-    py: Float32Array;
-    pz: Float32Array;
-    vx: Float32Array;
-    vy: Float32Array;
-    vz: Float32Array;
-    ax: Float32Array;
-    ay: Float32Array;
-    az: Float32Array;
-    aax: Float32Array;
-    aay: Float32Array;
-    aaz: Float32Array;
-    densities: Float32Array;
-    pressures: Float32Array;
-    grid: Grid;
-    cellContents: number[][]; // index-based lists
-    pointToCell: number[]; // maps particle index to cell index
-    neighbors: number[][]; // neighbor adjacency list for each particle
-    particleMass: number;
-    invH: number;
-    neighborOffsets: number[]; // in grid space
-
-    // Additional derived properties
-    invReferenceDensity: number; // inverse of reference density
-    taitB: number; // 'B' constant for Tait's equation
-  }
-
-
-  interface DebugParameters {
-    recordUntil: number;
-    pauseAfter: number;
-    colorMode: 'pressure' | 'density';
-  }
-
-  interface View {
-    renderer: WebGLRenderer;
-    camera: PerspectiveCamera;
-    scene: Scene;
-    particles: Points;
-    clock: Clock;
-  }
-
+  // Add any global types here if needed in the future
 }
